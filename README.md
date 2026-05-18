@@ -1,23 +1,35 @@
-# VibeSplash 🎬
+# CineSplash 🎬
 
-A Playnite plugin that displays a **splash screen** when launching a game — showing the game's background art and logo overlay while the game loads.
+<p align="center">
+  <img src="https://cdn.allthepics.net/images/2026/05/17/CineSplash.png" alt="CineSplash Logo"/>
+</p>
 
-This is a fork of [Artzox's Playnite Splash Addon](https://github.com/artzox/Playnite-Splash-Addon), further extended by [EvoShot](https://github.com/EvoShot/Playnite-Splash-Addon-VibeSplash), with additional features added in this fork.
+<p align="center">
+  A Playnite plugin that turns your game launch into a cinematic moment.
+</p>
+
+---
+
+## What is CineSplash?
+
+CineSplash displays a fullscreen splash screen when you launch a game — showing the game's background art, logo overlay, and optionally a **video trailer** from [Extra Metadata Loader](https://github.com/darklinkpower/PlayniteExtensionsCollection) while the game loads. Think of it as a personal cinema intro, every time you play.
+
+This is a fork of [VibeSplash by EvoShot](https://github.com/EvoShot/Playnite-Splash-Addon-VibeSplash), which itself is a fork of [Artzox's Playnite Splash Addon](https://github.com/artzox/Playnite-Splash-Addon), extended with video playback and additional features.
 
 ---
 
 ## Features
 
-- 🖼️ Displays game background art as a fullscreen splash when launching a game
-- 🎬 **Video splash support** — plays `VideoTrailer.mp4` or `VideoMicrotrailer.mp4` from [Extra Metadata Loader](https://github.com/darklinkpower/PlayniteExtensionsCollection) as the splash background
-- 🔇 Optional audio mute for video playback
-- 🎯 Choose your preferred video source (trailer, microtrailer, or either with fallback)
-- 🏷️ Logo overlay from Extra Metadata Loader displayed on top of the background/video
+- 🎬 **Video splash** — plays `VideoTrailer.mp4` or `VideoMicrotrailer.mp4` from Extra Metadata Loader as a fullscreen cinematic splash
+- 🖼️ Falls back to static background art if no video is found
+- 🏷️ Logo overlay from Extra Metadata Loader displayed on top
+- 🎯 Choose your preferred video source — trailer, microtrailer, or either with fallback
+- 🔇 Optional audio mute during video playback
 - ⏱️ Configurable splash duration — globally, per-platform, or per-game
 - ⏳ Option to wait until the game has actually started before the timer begins
-- 🔄 Optional splash screen when returning from a game (on game close)
+- 🔄 Optional splash screen when returning to Playnite after closing a game
 - 🚫 Disable splash in Desktop mode, Fullscreen mode, or both
-- 📋 Exclude specific games from showing the splash
+- 📋 Exclude specific games from the splash
 - 💻 Supports both **portable** and **installed** Playnite setups
 
 ---
@@ -47,7 +59,7 @@ This is a fork of [Artzox's Playnite Splash Addon](https://github.com/artzox/Pla
 ## Video Splash Setup
 
 1. Install [Extra Metadata Loader](https://github.com/darklinkpower/PlayniteExtensionsCollection) and download trailers for your games
-2. In Playnite go to **Add-ons → VibeSplash → Settings**
+2. In Playnite go to **Add-ons → CineSplash → Settings**
 3. Enable **"Play video trailer as splash background"**
 4. Choose your preferred video source:
    - **Trailer → fallback: Microtrailer** *(default)*
@@ -55,7 +67,7 @@ This is a fork of [Artzox's Playnite Splash Addon](https://github.com/artzox/Pla
    - **Trailer only**
    - **Microtrailer only**
 
-If no video is found for a game, VibeSplash falls back to the static background image automatically.
+If no video is found for a game, CineSplash falls back to the static background image automatically.
 
 ---
 
@@ -82,12 +94,24 @@ If no video is found for a game, VibeSplash falls back to the static background 
 Requirements: **Visual Studio 2022** with .NET desktop development workload.
 
 1. Clone the repo
-2. Open `VibeSplash.csproj` and update the `<HintPath>` values for `Playnite.SDK.dll` and `Newtonsoft.Json.dll` to point to your Playnite folder
-3. Build with MSBuild:
+2. Open `CineSplash.csproj` and update the `<HintPath>` values for `Playnite.SDK.dll` and `Newtonsoft.Json.dll` to point to your Playnite folder
+3. Run the build and pack script:
+   ```powershell
+   .\pack.ps1
    ```
-   "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" VibeSplash.csproj /p:Configuration=Release
-   ```
-4. Output is in `bin\Release\`
+   This will build the project, copy assets, and produce a ready-to-install `.pext` in the `packed\` folder.
+
+---
+
+## ⚠️ Disclaimer
+
+> **This plugin is vibe coded.**
+>
+> The additional features in this fork were developed with AI assistance (Claude by Anthropic). The code works, but it has not been extensively tested across all Playnite configurations, game libraries, or edge cases. Use it at your own risk.
+>
+> - Always back up your Playnite data before installing third-party plugins
+> - If something breaks, check `{PlayniteFolder}\playnite.log` for errors
+> - Issues and PRs are welcome, but support is best-effort
 
 ---
 
@@ -95,4 +119,4 @@ Requirements: **Visual Studio 2022** with .NET desktop development workload.
 
 - Original addon by [Artzox](https://github.com/artzox/Playnite-Splash-Addon)
 - VibeSplash fork by [EvoShot](https://github.com/EvoShot/Playnite-Splash-Addon-VibeSplash)
-- Video splash & additional features by [Raoul](https://github.com/YOUR_USERNAME)
+- CineSplash fork by [Raoul](https://github.com/YOUR_USERNAME)
