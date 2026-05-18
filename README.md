@@ -1,80 +1,98 @@
-# 🎮 VibeSplash — Playnite Splash Screen Addon
+# VibeSplash 🎬
 
-> ⚠️ **VIBE CODED** — This fork was written entirely with AI assistance (Claude). It may work perfectly. It may have quirks. It was not hand-crafted by a seasoned C# dev poring over the Playnite SDK at 2am. It was *vibed* into existence. Use it, enjoy it, and report issues with that in mind.
+A Playnite plugin that displays a **splash screen** when launching a game — showing the game's background art and logo overlay while the game loads.
 
----
-
-## What is VibeSplash?
-
-VibeSplash is a fork of the excellent [Playnite-Splash-Addon by Artzox](https://github.com/artzox/Playnite-Splash-Addon). It shows a beautiful full-screen splash screen when you launch a game, combining your game's background image with its logo (via the Extra Metadata Loader plugin).
-
-**VibeSplash adds one key feature on top of the original:**
-
-### ✨ Splash Screen on Game Close
-A new option lets the splash screen appear **after you close a game** — welcoming you back to Playnite. Perfect for that "returning to base" cinematic feel.
+This is a fork of [Artzox's Playnite Splash Addon](https://github.com/artzox/Playnite-Splash-Addon), further extended by [EvoShot](https://github.com/EvoShot/Playnite-Splash-Addon-VibeSplash), with additional features added in this fork.
 
 ---
 
 ## Features
 
-- Full-screen splash on **game launch** (original feature)
-- Full-screen splash **after closing a game** ⚡ *(VibeSplash exclusive)*
-- Displays game background image + logo (requires Extra Metadata Loader)
-- Configurable splash duration (global, per-platform, or per-game)
-- "Wait for game to start" timer mode
-- Excluded game list
-- Logo size control
-- Smooth fade-in / fade-out animations
-
----
-
-## Installation
-
-1. Download the latest release from the [Releases](https://github.com/EvoShot/Playnite-Splash-Addon-VibeSplash/releases) page.
-2. In Playnite, go to **Add-ons → Install from file** and select the `.pext` file.
-3. Restart Playnite.
-4. Configure via **Add-ons → VibeSplash → Settings**.
-
----
-
-## Configuration
-
-| Setting | Description |
-|---|---|
-| Default Duration | How long the splash shows (seconds) |
-| Logo Size | Width of the game logo overlay (px, default 300) |
-| Wait for game to start | Starts the timer only after the game process is detected |
-| **Show splash on game close** | ⚡ New — shows splash when you return from a game |
-| **Disable in Fullscreen mode** | ⚡ New — suppresses the splash entirely when Playnite is in Fullscreen mode |
-| **Disable in Desktop mode** | ⚡ New — suppresses the splash entirely when Playnite is in Desktop mode |
-| Platform-specific timers | Different durations per platform |
-| Game-specific durations | Override duration for specific game IDs |
-| Excluded Game IDs | Skip splash entirely for listed games |
+- 🖼️ Displays game background art as a fullscreen splash when launching a game
+- 🎬 **Video splash support** — plays `VideoTrailer.mp4` or `VideoMicrotrailer.mp4` from [Extra Metadata Loader](https://github.com/darklinkpower/PlayniteExtensionsCollection) as the splash background
+- 🔇 Optional audio mute for video playback
+- 🎯 Choose your preferred video source (trailer, microtrailer, or either with fallback)
+- 🏷️ Logo overlay from Extra Metadata Loader displayed on top of the background/video
+- ⏱️ Configurable splash duration — globally, per-platform, or per-game
+- ⏳ Option to wait until the game has actually started before the timer begins
+- 🔄 Optional splash screen when returning from a game (on game close)
+- 🚫 Disable splash in Desktop mode, Fullscreen mode, or both
+- 📋 Exclude specific games from showing the splash
+- 💻 Supports both **portable** and **installed** Playnite setups
 
 ---
 
 ## Requirements
 
-- [Playnite](https://playnite.link/) (latest version recommended)
-- [Extra Metadata Loader](https://playnite.link/addons.html) *(optional — for logo display)*
+- [Playnite](https://playnite.link/) 9 or newer
+- [Extra Metadata Loader](https://github.com/darklinkpower/PlayniteExtensionsCollection) *(optional — required for logo and video features)*
 
 ---
 
-## Credits & Attribution
+## Installation
 
-**Original addon:** [Playnite-Splash-Addon](https://github.com/artzox/Playnite-Splash-Addon) by [Artzox](https://github.com/artzox)  
-**This fork:** [VibeSplash](https://github.com/EvoShot/Playnite-Splash-Addon-VibeSplash) by EvoShot
+### Via .pext (recommended)
+1. Download the latest `.pext` from the [Releases](../../releases) page
+2. Double-click the `.pext` file — Playnite will prompt you to install it
 
-All core functionality is built on Artzox's original work. VibeSplash exists because of that solid foundation. Go star the original too. 🙏
+### Manual
+1. Download and extract the release zip
+2. Copy the plugin folder into:
+   - **Portable:** `{PlayniteFolder}\Extensions\`
+   - **Installed:** `%AppData%\Playnite\Extensions\`
+3. Restart Playnite
 
 ---
 
-## Disclaimer
+## Video Splash Setup
 
-> 🤖 **This addon was vibe coded.** That means it was developed through AI-assisted iteration rather than traditional software craftsmanship. The logic is sound, the feature works, but if something breaks in an unexpected way — that's the vibe tax. PRs welcome.
+1. Install [Extra Metadata Loader](https://github.com/darklinkpower/PlayniteExtensionsCollection) and download trailers for your games
+2. In Playnite go to **Add-ons → VibeSplash → Settings**
+3. Enable **"Play video trailer as splash background"**
+4. Choose your preferred video source:
+   - **Trailer → fallback: Microtrailer** *(default)*
+   - **Microtrailer → fallback: Trailer**
+   - **Trailer only**
+   - **Microtrailer only**
+
+If no video is found for a game, VibeSplash falls back to the static background image automatically.
 
 ---
 
-## License
+## Settings Overview
 
-Inherits from the original project. See the [original repository](https://github.com/artzox/Playnite-Splash-Addon) for licensing details.
+| Setting | Description |
+|---|---|
+| Default Duration | How long the splash stays on screen (seconds) |
+| Logo Size | Width of the logo overlay in pixels |
+| Wait for game to start | Starts the timer only after the game process is detected |
+| Show splash on game close | Shows the splash when you return to Playnite after closing a game |
+| Disable in Fullscreen/Desktop | Suppress the splash in a specific Playnite mode |
+| Enable Video Splash | Use a video file as the splash background |
+| Video Source | Which video file to prefer (trailer vs. microtrailer) |
+| Mute Video Audio | Silence the video during the splash |
+| Platform-specific durations | Set different durations per platform |
+| Game-specific durations | Override duration for individual games by database ID |
+| Excluded Game IDs | Skip the splash entirely for specific games |
+
+---
+
+## Building from Source
+
+Requirements: **Visual Studio 2022** with .NET desktop development workload.
+
+1. Clone the repo
+2. Open `VibeSplash.csproj` and update the `<HintPath>` values for `Playnite.SDK.dll` and `Newtonsoft.Json.dll` to point to your Playnite folder
+3. Build with MSBuild:
+   ```
+   "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" VibeSplash.csproj /p:Configuration=Release
+   ```
+4. Output is in `bin\Release\`
+
+---
+
+## Credits
+
+- Original addon by [Artzox](https://github.com/artzox/Playnite-Splash-Addon)
+- VibeSplash fork by [EvoShot](https://github.com/EvoShot/Playnite-Splash-Addon-VibeSplash)
+- Video splash & additional features by [Raoul](https://github.com/YOUR_USERNAME)
