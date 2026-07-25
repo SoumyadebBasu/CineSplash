@@ -7,6 +7,7 @@ using System;
 using System.Globalization;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows;
 using CineSplash;
 
 namespace CineSplash
@@ -16,6 +17,75 @@ namespace CineSplash
         public CineSplashSettingsView()
         {
             InitializeComponent();
+            this.Unloaded += UserControl_Unloaded;
+        }
+
+        private bool _isRecording = false;
+
+        private void RecordHotkeyBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isRecording) return;
+            
+            var window = Window.GetWindow(this);
+            if (window == null) return;
+
+            _isRecording = true;
+            RecordHotkeyBtn.Content = "Listening...";
+            
+            window.PreviewKeyDown -= Window_PreviewKeyDown;
+            window.PreviewKeyDown += Window_PreviewKeyDown;
+        }
+
+
+
+        private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (!_isRecording) return;
+            
+            var key = e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key;
+            
+            // Ignore modifier keys by themselves
+            if (key == System.Windows.Input.Key.LeftCtrl || key == System.Windows.Input.Key.RightCtrl ||
+                key == System.Windows.Input.Key.LeftAlt || key == System.Windows.Input.Key.RightAlt ||
+                key == System.Windows.Input.Key.LeftShift || key == System.Windows.Input.Key.RightShift ||
+                key == System.Windows.Input.Key.LWin || key == System.Windows.Input.Key.RWin)
+            {
+                return;
+            }
+            
+            e.Handled = true;
+
+            if (DataContext is CineSplashSettings settings)
+            {
+                if (key == System.Windows.Input.Key.Back || key == System.Windows.Input.Key.Delete)
+                {
+                    settings.SkipHotkey = System.Windows.Input.Key.None;
+                    settings.SkipHotkeyModifiers = System.Windows.Input.ModifierKeys.None;
+                }
+                else
+                {
+                    settings.SkipHotkey = key;
+                    settings.SkipHotkeyModifiers = System.Windows.Input.Keyboard.Modifiers;
+                }
+            }
+            
+            StopRecording();
+        }
+        
+        private void StopRecording()
+        {
+            _isRecording = false;
+            RecordHotkeyBtn.Content = "Record Hotkey";
+            var window = Window.GetWindow(this);
+            if (window != null)
+            {
+                window.PreviewKeyDown -= Window_PreviewKeyDown;
+            }
+        }
+
+        private void UserControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            StopRecording();
         }
     }
 

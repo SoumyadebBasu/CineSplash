@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
@@ -43,6 +44,10 @@ namespace CineSplash
         private bool _disableInFullscreen = false;
         private bool _disableInDesktop = false;
         private int _logoSize = 300;
+        private Key _skipHotkey = Key.Escape;
+        private ModifierKeys _skipHotkeyModifiers = ModifierKeys.None;
+        private Playnite.SDK.Events.ControllerInput _skipControllerButton = Playnite.SDK.Events.ControllerInput.None;
+        private Playnite.SDK.Events.ControllerInput _skipControllerButton2 = Playnite.SDK.Events.ControllerInput.None;
 
         // ── NEW: Video settings ───────────────────────────────────────────────────
         private bool _enableVideoSplash = true;
@@ -89,6 +94,39 @@ namespace CineSplash
 
         [JsonProperty("LogoSize")]
         public int LogoSize { get => _logoSize; set => SetValue(ref _logoSize, value); }
+
+        [JsonProperty("SkipHotkey")]
+        public Key SkipHotkey { get => _skipHotkey; set { SetValue(ref _skipHotkey, value); OnPropertyChanged(nameof(SkipHotkeyText)); } }
+
+        [JsonProperty("SkipHotkeyModifiers")]
+        public ModifierKeys SkipHotkeyModifiers { get => _skipHotkeyModifiers; set { SetValue(ref _skipHotkeyModifiers, value); OnPropertyChanged(nameof(SkipHotkeyText)); } }
+
+        [JsonProperty("SkipControllerButton")]
+        public Playnite.SDK.Events.ControllerInput SkipControllerButton { get => _skipControllerButton; set { SetValue(ref _skipControllerButton, value); OnPropertyChanged(nameof(SkipHotkeyText)); } }
+
+        [JsonProperty("SkipControllerButton2")]
+        public Playnite.SDK.Events.ControllerInput SkipControllerButton2 { get => _skipControllerButton2; set { SetValue(ref _skipControllerButton2, value); OnPropertyChanged(nameof(SkipHotkeyText)); } }
+
+        [JsonIgnore]
+        public string SkipHotkeyText
+        {
+            get
+            {
+                if (SkipHotkey == Key.None)
+                {
+                    return "None";
+                }
+
+                var parts = new List<string>();
+                if (SkipHotkeyModifiers.HasFlag(ModifierKeys.Control)) parts.Add("Ctrl");
+                if (SkipHotkeyModifiers.HasFlag(ModifierKeys.Alt)) parts.Add("Alt");
+                if (SkipHotkeyModifiers.HasFlag(ModifierKeys.Shift)) parts.Add("Shift");
+                if (SkipHotkeyModifiers.HasFlag(ModifierKeys.Windows)) parts.Add("Win");
+                
+                parts.Add(SkipHotkey.ToString());
+                return string.Join(" + ", parts);
+            }
+        }
 
         // ── NEW: Video properties ─────────────────────────────────────────────────
 

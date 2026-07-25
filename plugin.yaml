@@ -1,7 +1,7 @@
-﻿Id: a3f7c812-4d9e-47b1-b563-9e1a2c3d4f50
+Id: a3f7c812-4d9e-47b1-b563-9e1a2c3d4f50
 Name: CineSplash
 Author: YOUR_NAME (fork of EvoShot/VibeSplash, Artzox/Playnite-Splash-Addon)
-Version: 1.0.0
+Version: 1.1.0
 Module: CineSplash.dll
 Type: GenericPlugin
 Links:

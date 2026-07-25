@@ -2,7 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:CineSplash"
-             xmlns:sys="clr-namespace:System;assembly=mscorlib">
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:input="clr-namespace:System.Windows.Input;assembly=WindowsBase"
+             xmlns:events="clr-namespace:Playnite.SDK.Events;assembly=Playnite.SDK">
     <UserControl.Resources>
         <!-- Supplies the four enum values as an ItemsSource -->
         <ObjectDataProvider x:Key="VideoSourceValues"
@@ -15,6 +17,22 @@
 
         <!-- Human-readable labels for each enum value -->
         <local:VideoSourceDescriptionConverter x:Key="VideoSourceConverter"/>
+
+        <ObjectDataProvider x:Key="KeyValues"
+                            MethodName="GetValues"
+                            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="input:Key"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        
+        <ObjectDataProvider x:Key="ControllerValues"
+                            MethodName="GetValues"
+                            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="events:ControllerInput"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
     </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="20">
@@ -29,6 +47,28 @@
                      Width="100" HorizontalAlignment="Left" Margin="0,0,0,5"/>
             <TextBlock Text="Note: The logo will be scaled to match the aspect ratio. Default is 300px."
                        FontStyle="Italic" Foreground="Gray" FontSize="11" Margin="0,0,0,15"/>
+
+            <!-- Skip Hotkey -->
+            <TextBlock Text="Skip Splash Screen (Keyboard):" Margin="0,0,0,5" FontWeight="Bold"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <Button x:Name="RecordHotkeyBtn" Content="Record Hotkey" Width="100" Click="RecordHotkeyBtn_Click"/>
+                <TextBlock Text="Current Hotkey: " VerticalAlignment="Center" Margin="15,0,5,0" FontWeight="Bold"/>
+                <TextBlock Text="{Binding SkipHotkeyText, Mode=OneWay}" VerticalAlignment="Center" Foreground="{DynamicResource TextBrush}"/>
+                <TextBlock Text="(Press any keyboard combo to record)" FontStyle="Italic" Foreground="Gray" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0"/>
+            </StackPanel>
+
+            <TextBlock Text="Skip Splash Screen (Controller):" Margin="0,0,0,5" FontWeight="Bold"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                <ComboBox SelectedValue="{Binding SkipControllerButton, UpdateSourceTrigger=PropertyChanged}"
+                          ItemsSource="{Binding Source={StaticResource ControllerValues}}"
+                          Width="120" HorizontalAlignment="Left" />
+                <TextBlock Text="+" VerticalAlignment="Center" Margin="5,0,5,0" FontWeight="Bold"/>
+                <ComboBox SelectedValue="{Binding SkipControllerButton2, UpdateSourceTrigger=PropertyChanged}"
+                          ItemsSource="{Binding Source={StaticResource ControllerValues}}"
+                          Width="120" HorizontalAlignment="Left" />
+                <TextBlock Text="Select a controller button or combo" FontStyle="Italic" Foreground="Gray" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0"/>
+            </StackPanel>
+            <TextBlock Text="Note: Playnite must have 'Enable Controller Input' enabled in Desktop mode settings for this to work." FontStyle="Italic" Foreground="Gray" FontSize="11" Margin="0,0,0,15"/>
 
             <!-- Timing options -->
             <TextBlock Text="Timing Options" FontWeight="Bold" FontSize="13" Margin="0,0,0,8"/>
