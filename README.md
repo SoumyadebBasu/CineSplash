@@ -1,7 +1,7 @@
 # CineSplash 🎬
 
 <p align="center">
-  <img src="https://cdn.allthepics.net/images/2026/05/17/CineSplash.png" alt="CineSplash Logo"/>
+  <img src="https://i.ibb.co/wFq7QQ2N/Cine-Splash.png" alt="CineSplash Logo"/>
 </p>
 
 <p align="center">
@@ -21,6 +21,7 @@ This is a fork of [VibeSplash by EvoShot](https://github.com/EvoShot/Playnite-Sp
 ## Features
 
 - 🎬 **Video splash** — plays `VideoTrailer.mp4` or `VideoMicrotrailer.mp4` from Extra Metadata Loader as a fullscreen cinematic splash
+- ⏹️ **Skip splash playback** — Press a custom keyboard hotkey (with modifier support) or gamepad button combination (e.g., `Start + Back`) to interrupt playback at any time
 - 🖼️ Falls back to static background art if no video is found
 - 🏷️ Logo overlay from Extra Metadata Loader displayed on top
 - 🎯 Choose your preferred video source — trailer, microtrailer, or either with fallback
@@ -77,6 +78,8 @@ If no video is found for a game, CineSplash falls back to the static background 
 |---|---|
 | Default Duration | How long the splash stays on screen (seconds) |
 | Logo Size | Width of the logo overlay in pixels |
+| Skip Splash (Keyboard) | Custom keyboard key/combo to interrupt video playback |
+| Skip Splash (Controller) | Controller button or 2-button combo (e.g. Start + Back) to interrupt video playback |
 | Wait for game to start | Starts the timer only after the game process is detected |
 | Show splash on game close | Shows the splash when you return to Playnite after closing a game |
 | Disable in Fullscreen/Desktop | Suppress the splash in a specific Playnite mode |
