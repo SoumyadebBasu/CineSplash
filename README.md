@@ -1,7 +1,7 @@
 # CineSplash 🎬
 
 <p align="center">
-  <img src="https://cdn.allthepics.net/images/2026/05/17/CineSplash.png" alt="CineSplash Logo"/>
+  <img src="https://i.ibb.co/wFq7QQ2N/Cine-Splash.png" alt="CineSplash Logo"/>
 </p>
 
 <p align="center">
