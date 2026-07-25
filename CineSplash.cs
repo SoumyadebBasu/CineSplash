@@ -10,6 +10,8 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Runtime.InteropServices;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
@@ -27,10 +29,14 @@ namespace CineSplash
         private CineSplashSettings _settings;
         private DateTime _gameStartTimestamp;
 
+        // Static instance to allow Settings View to access settings if needed
+        public static CineSplashPlugin Instance { get; private set; }
+
         public override Guid Id { get; } = Guid.Parse("7cdfb7ff-6328-4b71-962d-53f95593b7a9");
 
         public CineSplashPlugin(IPlayniteAPI api) : base(api)
         {
+            Instance = this;
             _settings = LoadPluginSettings<CineSplashSettings>() ?? new CineSplashSettings();
             Properties = new GenericPluginProperties { HasSettings = true };
         }
@@ -78,6 +84,8 @@ namespace CineSplash
         }
 
         // ─── Event handlers ───────────────────────────────────────────────────────
+        
+
 
         public override void OnGameStarting(OnGameStartingEventArgs args)
         {
@@ -331,6 +339,53 @@ namespace CineSplash
 
             splashWindow.Content = grid;
 
+            // ── Input polling (bypasses window focus and Playnite game limits) ────
+            var inputTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(33) // ~30 FPS
+            };
+            inputTimer.Tick += (s, e) =>
+            {
+                bool shouldClose = false;
+
+                // 1. Check Keyboard Hotkey
+                if (_settings.SkipHotkey != Key.None)
+                {
+                    if (InputPoller.IsKeyPressed(_settings.SkipHotkey) && 
+                        InputPoller.AreModifiersPressed(_settings.SkipHotkeyModifiers))
+                    {
+                        shouldClose = true;
+                    }
+                }
+
+                // 2. Check Controller Hotkey(s)
+                if (!shouldClose)
+                {
+                    bool requiresCombo = _settings.SkipControllerButton != Playnite.SDK.Events.ControllerInput.None && _settings.SkipControllerButton2 != Playnite.SDK.Events.ControllerInput.None;
+                    
+                    bool button1Pressed = _settings.SkipControllerButton != Playnite.SDK.Events.ControllerInput.None && InputPoller.IsControllerButtonPressed(_settings.SkipControllerButton);
+                    bool button2Pressed = _settings.SkipControllerButton2 != Playnite.SDK.Events.ControllerInput.None && InputPoller.IsControllerButtonPressed(_settings.SkipControllerButton2);
+
+                    if (requiresCombo)
+                    {
+                        if (button1Pressed && button2Pressed) shouldClose = true;
+                    }
+                    else if (button1Pressed || button2Pressed)
+                    {
+                        shouldClose = true;
+                    }
+                }
+
+                if (shouldClose)
+                {
+                    inputTimer.Stop();
+                    FadeAndClose(splashWindow);
+                }
+            };
+            
+            splashWindow.Closed += (s, e) => inputTimer.Stop();
+            inputTimer.Start();
+
             // ── Fade-in animation ─────────────────────────────────────────────────
             var fadeIn = new DoubleAnimation
             {
@@ -359,6 +414,102 @@ namespace CineSplash
 
             try { splashWindow.Show(); splashWindow.Activate(); }
             catch { }
+        }
+    }
+
+    public static class InputPoller
+    {
+        [DllImport("user32.dll")]
+        private static extern short GetAsyncKeyState(int vKey);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct XINPUT_STATE
+        {
+            public uint dwPacketNumber;
+            public XINPUT_GAMEPAD Gamepad;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct XINPUT_GAMEPAD
+        {
+            public ushort wButtons;
+            public byte bLeftTrigger;
+            public byte bRightTrigger;
+            public short sThumbLX;
+            public short sThumbLY;
+            public short sThumbRX;
+            public short sThumbRY;
+        }
+
+        [DllImport("xinput1_4.dll")]
+        private static extern int XInputGetState(int dwUserIndex, out XINPUT_STATE pState);
+
+        public static bool IsKeyPressed(Key key)
+        {
+            int vKey = KeyInterop.VirtualKeyFromKey(key);
+            return (GetAsyncKeyState(vKey) & 0x8000) != 0;
+        }
+
+        public static bool AreModifiersPressed(ModifierKeys requiredModifiers)
+        {
+            bool ctrlPressed = (GetAsyncKeyState(KeyInterop.VirtualKeyFromKey(Key.LeftCtrl)) & 0x8000) != 0 || 
+                               (GetAsyncKeyState(KeyInterop.VirtualKeyFromKey(Key.RightCtrl)) & 0x8000) != 0;
+            bool altPressed = (GetAsyncKeyState(KeyInterop.VirtualKeyFromKey(Key.LeftAlt)) & 0x8000) != 0 || 
+                              (GetAsyncKeyState(KeyInterop.VirtualKeyFromKey(Key.RightAlt)) & 0x8000) != 0;
+            bool shiftPressed = (GetAsyncKeyState(KeyInterop.VirtualKeyFromKey(Key.LeftShift)) & 0x8000) != 0 || 
+                                (GetAsyncKeyState(KeyInterop.VirtualKeyFromKey(Key.RightShift)) & 0x8000) != 0;
+            bool winPressed = (GetAsyncKeyState(KeyInterop.VirtualKeyFromKey(Key.LWin)) & 0x8000) != 0 || 
+                              (GetAsyncKeyState(KeyInterop.VirtualKeyFromKey(Key.RWin)) & 0x8000) != 0;
+
+            bool ctrlReq = requiredModifiers.HasFlag(ModifierKeys.Control);
+            bool altReq = requiredModifiers.HasFlag(ModifierKeys.Alt);
+            bool shiftReq = requiredModifiers.HasFlag(ModifierKeys.Shift);
+            bool winReq = requiredModifiers.HasFlag(ModifierKeys.Windows);
+
+            return (ctrlPressed == ctrlReq) && (altPressed == altReq) && (shiftPressed == shiftReq) && (winPressed == winReq);
+        }
+        
+        public static bool IsControllerButtonPressed(Playnite.SDK.Events.ControllerInput input)
+        {
+            if (input == Playnite.SDK.Events.ControllerInput.None) return false;
+
+            for (int i = 0; i < 4; i++)
+            {
+                try
+                {
+                    if (XInputGetState(i, out XINPUT_STATE state) == 0)
+                    {
+                        if (IsInputPressed(state.Gamepad, input))
+                            return true;
+                    }
+                }
+                catch { } // Suppress errors if xinput is somehow completely absent
+            }
+            return false;
+        }
+
+        private static bool IsInputPressed(XINPUT_GAMEPAD gamepad, Playnite.SDK.Events.ControllerInput input)
+        {
+            switch (input)
+            {
+                case Playnite.SDK.Events.ControllerInput.DPadUp: return (gamepad.wButtons & 0x0001) != 0;
+                case Playnite.SDK.Events.ControllerInput.DPadDown: return (gamepad.wButtons & 0x0002) != 0;
+                case Playnite.SDK.Events.ControllerInput.DPadLeft: return (gamepad.wButtons & 0x0004) != 0;
+                case Playnite.SDK.Events.ControllerInput.DPadRight: return (gamepad.wButtons & 0x0008) != 0;
+                case Playnite.SDK.Events.ControllerInput.Start: return (gamepad.wButtons & 0x0010) != 0;
+                case Playnite.SDK.Events.ControllerInput.Back: return (gamepad.wButtons & 0x0020) != 0;
+                case Playnite.SDK.Events.ControllerInput.LeftStick: return (gamepad.wButtons & 0x0040) != 0;
+                case Playnite.SDK.Events.ControllerInput.RightStick: return (gamepad.wButtons & 0x0080) != 0;
+                case Playnite.SDK.Events.ControllerInput.LeftShoulder: return (gamepad.wButtons & 0x0100) != 0;
+                case Playnite.SDK.Events.ControllerInput.RightShoulder: return (gamepad.wButtons & 0x0200) != 0;
+                case Playnite.SDK.Events.ControllerInput.A: return (gamepad.wButtons & 0x1000) != 0;
+                case Playnite.SDK.Events.ControllerInput.B: return (gamepad.wButtons & 0x2000) != 0;
+                case Playnite.SDK.Events.ControllerInput.X: return (gamepad.wButtons & 0x4000) != 0;
+                case Playnite.SDK.Events.ControllerInput.Y: return (gamepad.wButtons & 0x8000) != 0;
+                case Playnite.SDK.Events.ControllerInput.TriggerLeft: return gamepad.bLeftTrigger > 128;
+                case Playnite.SDK.Events.ControllerInput.TriggerRight: return gamepad.bRightTrigger > 128;
+            }
+            return false;
         }
     }
 }
