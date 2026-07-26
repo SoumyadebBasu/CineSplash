@@ -254,6 +254,15 @@ namespace CineSplash
 
         private void StartForegroundHookWithAutoSave(Window splashWindow, Game game)
         {
+            // Snapshot all currently running process IDs.
+            // The foreground hook will only accept windows from NEW processes
+            // (i.e., the game process that spawns after this point).
+            var preExistingPids = new HashSet<uint>();
+            foreach (var proc in System.Diagnostics.Process.GetProcesses())
+            {
+                try { preExistingPids.Add((uint)proc.Id); } catch { }
+            }
+
             WindowDetector.StartForegroundHook(windowTitle =>
             {
                 Application.Current.Dispatcher.Invoke(() =>
@@ -266,7 +275,7 @@ namespace CineSplash
                     StopAllDetection();
                     FadeAndClose(splashWindow);
                 });
-            });
+            }, preExistingPids);
         }
 
         private void StartMaxTimeout(Window splashWindow)
@@ -494,12 +503,12 @@ namespace CineSplash
                 _elapsedTimer.Start();
             }
 
-            // ── Manual recalibration prompt ───────────────────────────────
+            // ── Manual recalibration prompt with window picker ────────
             if (calibrationMode == CalibrationMode.Manual)
             {
                 var promptBg = new Border
                 {
-                    Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)),
+                    Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
                     CornerRadius = new CornerRadius(10),
                     Padding = new Thickness(30, 20, 30, 20),
                     HorizontalAlignment = HorizontalAlignment.Center,
@@ -510,7 +519,7 @@ namespace CineSplash
                 var promptPanel = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center };
                 promptPanel.Children.Add(new TextBlock
                 {
-                    Text = "🎮 Calibration Mode",
+                    Text = "\U0001F3AE Calibration Mode",
                     Foreground = new SolidColorBrush(Color.FromRgb(255, 200, 50)),
                     FontSize = 24,
                     FontWeight = FontWeights.Bold,
@@ -519,7 +528,7 @@ namespace CineSplash
                 });
                 promptPanel.Children.Add(new TextBlock
                 {
-                    Text = "When you see the game window appear behind this screen,\npress the hotkey below to save the timing.",
+                    Text = "Select the game window from the dropdown below,\nthen click Save.",
                     Foreground = Brushes.White,
                     FontSize = 16,
                     TextAlignment = TextAlignment.Center,
@@ -527,15 +536,75 @@ namespace CineSplash
                     HorizontalAlignment = HorizontalAlignment.Center,
                     Margin = new Thickness(0, 0, 0, 16)
                 });
+
+                // ── Window picker dropdown ──
+                var windowCombo = new ComboBox
+                {
+                    Width = 450,
+                    FontSize = 14,
+                    Margin = new Thickness(0, 0, 0, 8),
+                    HorizontalAlignment = HorizontalAlignment.Center
+                };
+                foreach (var t in WindowDetector.GetAllVisibleWindowTitles())
+                    windowCombo.Items.Add(t);
+                promptPanel.Children.Add(windowCombo);
+
+                // ── Refresh button ──
+                var refreshBtn = new Button
+                {
+                    Content = "\U0001F504 Refresh List",
+                    FontSize = 13,
+                    Padding = new Thickness(12, 4, 12, 4),
+                    Margin = new Thickness(0, 0, 0, 16),
+                    HorizontalAlignment = HorizontalAlignment.Center
+                };
+                refreshBtn.Click += (s, e) =>
+                {
+                    windowCombo.Items.Clear();
+                    foreach (var t in WindowDetector.GetAllVisibleWindowTitles())
+                        windowCombo.Items.Add(t);
+                };
+                promptPanel.Children.Add(refreshBtn);
+
+                // ── Save button ──
+                var saveBtn = new Button
+                {
+                    Content = "\U0001F4BE  Save Calibration",
+                    FontSize = 16,
+                    FontWeight = FontWeights.Bold,
+                    Padding = new Thickness(20, 8, 20, 8),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(0, 0, 0, 12)
+                };
+                saveBtn.Click += (s, e) =>
+                {
+                    if (windowCombo.SelectedItem is string selectedTitle)
+                    {
+                        int elapsed = (int)(DateTime.Now - _splashOpenTimestamp).TotalSeconds;
+                        _settings.SaveCalibration(
+                            _currentGame.Id.ToString(),
+                            _currentGame.Name,
+                            selectedTitle,
+                            elapsed);
+                        SavePluginSettings(_settings);
+                        Logger.Info($"CineSplash: Manual calibration '{_currentGame.Name}' -> \"{selectedTitle}\", {elapsed}s");
+                        StopAllDetection();
+                        FadeAndClose(splashWindow);
+                    }
+                };
+                promptPanel.Children.Add(saveBtn);
+
+                // ── Hotkey fallback hint ──
                 promptPanel.Children.Add(new TextBlock
                 {
-                    Text = $"Press  [ {_settings.CalibrationHotkeyText} ]",
-                    Foreground = new SolidColorBrush(Color.FromRgb(100, 255, 100)),
-                    FontSize = 28,
-                    FontWeight = FontWeights.Bold,
+                    Text = $"Or press  [ {_settings.CalibrationHotkeyText} ]  to capture the current foreground window.",
+                    Foreground = new SolidColorBrush(Color.FromArgb(160, 200, 200, 200)),
+                    FontSize = 12,
                     FontFamily = new FontFamily("Consolas"),
+                    TextAlignment = TextAlignment.Center,
                     HorizontalAlignment = HorizontalAlignment.Center
                 });
+
                 promptBg.Child = promptPanel;
                 grid.Children.Add(promptBg);
             }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -46,12 +47,19 @@ namespace CineSplash
         private static WinEventProc _winEventProc; // Keep reference to prevent GC
         private static IntPtr _hookHandle = IntPtr.Zero;
         private static Action<string> _onWindowDetected;
+        private static HashSet<uint> _preExistingPids;
 
-        public static void StartForegroundHook(Action<string> onDetected)
+        /// <summary>
+        /// Start listening for foreground window changes.
+        /// If preExistingPids is provided, only windows from NEW processes
+        /// (not in the set) will trigger the callback.
+        /// </summary>
+        public static void StartForegroundHook(Action<string> onDetected, HashSet<uint> preExistingPids = null)
         {
             StopForegroundHook(); // Ensure we don't hook twice
 
             _onWindowDetected = onDetected;
+            _preExistingPids = preExistingPids;
             _winEventProc = new WinEventProc(WindowEventCallback);
 
             _hookHandle = SetWinEventHook(
@@ -72,12 +80,21 @@ namespace CineSplash
             }
             _winEventProc = null;
             _onWindowDetected = null;
+            _preExistingPids = null;
         }
 
         private static void WindowEventCallback(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)
         {
             if (eventType == EVENT_SYSTEM_FOREGROUND && hwnd != IntPtr.Zero)
             {
+                // If we have a pre-existing PID filter, only accept NEW processes
+                if (_preExistingPids != null)
+                {
+                    GetWindowThreadProcessId(hwnd, out uint pid);
+                    if (_preExistingPids.Contains(pid))
+                        return; // Window belongs to an app that was already running
+                }
+
                 string title = GetWindowTitle(hwnd);
                 if (!string.IsNullOrWhiteSpace(title) && 
                     title != "CineSplashScreen" && 
@@ -126,6 +143,32 @@ namespace CineSplash
                 return GetWindowTitle(hwnd);
             }
             return string.Empty;
+        }
+
+        /// <summary>
+        /// Returns a list of titles for all currently visible windows,
+        /// excluding splash screen, Playnite, and other known non-game windows.
+        /// Used by the manual calibration dropdown.
+        /// </summary>
+        public static List<string> GetAllVisibleWindowTitles()
+        {
+            var titles = new List<string>();
+            EnumWindows((hWnd, lParam) =>
+            {
+                if (!IsWindowVisible(hWnd))
+                    return true;
+
+                string title = GetWindowTitle(hWnd);
+                if (!string.IsNullOrWhiteSpace(title) &&
+                    title != "CineSplashScreen" &&
+                    title != "Playnite" &&
+                    !title.StartsWith("Analyzing", StringComparison.OrdinalIgnoreCase))
+                {
+                    titles.Add(title);
+                }
+                return true;
+            }, IntPtr.Zero);
+            return titles;
         }
 
         private static string GetWindowTitle(IntPtr hwnd)
