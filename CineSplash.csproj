@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="CineSplash.cs" />
     <Compile Include="CineSplashSettings.cs" />
+    <Compile Include="WindowDetector.cs" />
     <Compile Include="CineSplashSettingsView.xaml.cs">
       <DependentUpon>CineSplashSettingsView.xaml</DependentUpon>
     </Compile>

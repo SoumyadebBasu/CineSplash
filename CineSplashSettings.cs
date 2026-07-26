@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -33,6 +34,30 @@ namespace CineSplash
         MicrotrailerOnly
     }
 
+    public class CalibrationEntry : ObservableObject
+    {
+        private string _gameId;
+        private string _gameName;
+        private string _windowTitle;
+        private int _elapsedSeconds;
+        private bool _pendingRecalibration;
+
+        [JsonProperty("GameId")]
+        public string GameId { get => _gameId; set => SetValue(ref _gameId, value); }
+
+        [JsonProperty("GameName")]
+        public string GameName { get => _gameName; set => SetValue(ref _gameName, value); }
+
+        [JsonProperty("WindowTitle")]
+        public string WindowTitle { get => _windowTitle; set => SetValue(ref _windowTitle, value); }
+
+        [JsonProperty("ElapsedSeconds")]
+        public int ElapsedSeconds { get => _elapsedSeconds; set => SetValue(ref _elapsedSeconds, value); }
+
+        [JsonProperty("PendingRecalibration")]
+        public bool PendingRecalibration { get => _pendingRecalibration; set => SetValue(ref _pendingRecalibration, value); }
+    }
+
     public class CineSplashSettings : ObservableObject, ISettings
     {
         private List<string> _excludedGameIds = new List<string>();
@@ -48,6 +73,14 @@ namespace CineSplash
         private ModifierKeys _skipHotkeyModifiers = ModifierKeys.None;
         private Playnite.SDK.Events.ControllerInput _skipControllerButton = Playnite.SDK.Events.ControllerInput.None;
         private Playnite.SDK.Events.ControllerInput _skipControllerButton2 = Playnite.SDK.Events.ControllerInput.None;
+
+        // ── NEW: Window Detection settings ────────────────────────────────────────
+        private bool _enableWindowDetection = true;
+        private int _maxSplashDuration = 120;
+        private Key _calibrationHotkey = Key.F12;
+        private ModifierKeys _calibrationHotkeyModifiers = ModifierKeys.None;
+        private bool _showElapsedTime = false;
+        private ObservableCollection<CalibrationEntry> _calibrationEntries = new ObservableCollection<CalibrationEntry>();
 
         // ── NEW: Video settings ───────────────────────────────────────────────────
         private bool _enableVideoSplash = true;
@@ -126,6 +159,91 @@ namespace CineSplash
                 parts.Add(SkipHotkey.ToString());
                 return string.Join(" + ", parts);
             }
+        }
+
+        // ── NEW: Window Detection properties ──────────────────────────────────────
+
+        [JsonProperty("EnableWindowDetection")]
+        public bool EnableWindowDetection { get => _enableWindowDetection; set => SetValue(ref _enableWindowDetection, value); }
+
+        [JsonProperty("MaxSplashDuration")]
+        public int MaxSplashDuration { get => _maxSplashDuration; set => SetValue(ref _maxSplashDuration, value); }
+
+        [JsonProperty("CalibrationHotkey")]
+        public Key CalibrationHotkey { get => _calibrationHotkey; set { SetValue(ref _calibrationHotkey, value); OnPropertyChanged(nameof(CalibrationHotkeyText)); } }
+
+        [JsonProperty("CalibrationHotkeyModifiers")]
+        public ModifierKeys CalibrationHotkeyModifiers { get => _calibrationHotkeyModifiers; set { SetValue(ref _calibrationHotkeyModifiers, value); OnPropertyChanged(nameof(CalibrationHotkeyText)); } }
+
+        [JsonProperty("ShowElapsedTime")]
+        public bool ShowElapsedTime { get => _showElapsedTime; set => SetValue(ref _showElapsedTime, value); }
+
+        [JsonProperty("CalibrationEntries")]
+        public ObservableCollection<CalibrationEntry> CalibrationEntries { get => _calibrationEntries; set => SetValue(ref _calibrationEntries, value); }
+
+        [JsonIgnore]
+        public string CalibrationHotkeyText
+        {
+            get
+            {
+                if (CalibrationHotkey == Key.None) return "None";
+                var parts = new List<string>();
+                if (CalibrationHotkeyModifiers.HasFlag(ModifierKeys.Control)) parts.Add("Ctrl");
+                if (CalibrationHotkeyModifiers.HasFlag(ModifierKeys.Alt)) parts.Add("Alt");
+                if (CalibrationHotkeyModifiers.HasFlag(ModifierKeys.Shift)) parts.Add("Shift");
+                if (CalibrationHotkeyModifiers.HasFlag(ModifierKeys.Windows)) parts.Add("Win");
+                parts.Add(CalibrationHotkey.ToString());
+                return string.Join(" + ", parts);
+            }
+        }
+
+        public string GetWindowTitleForGame(string gameId)
+        {
+            var entry = CalibrationEntries?.FirstOrDefault(e => e.GameId == gameId);
+            if (entry != null && !entry.PendingRecalibration)
+                return entry.WindowTitle;
+            return null;
+        }
+
+        public bool IsPendingRecalibration(string gameId)
+        {
+            return CalibrationEntries?.Any(e => e.GameId == gameId && e.PendingRecalibration) == true;
+        }
+
+        public void SaveCalibration(string gameId, string gameName, string windowTitle, int elapsedSeconds)
+        {
+            if (CalibrationEntries == null) CalibrationEntries = new ObservableCollection<CalibrationEntry>();
+            var existing = CalibrationEntries.FirstOrDefault(e => e.GameId == gameId);
+            if (existing != null)
+            {
+                existing.GameName = gameName;
+                existing.WindowTitle = windowTitle;
+                existing.ElapsedSeconds = elapsedSeconds;
+                existing.PendingRecalibration = false;
+            }
+            else
+            {
+                CalibrationEntries.Add(new CalibrationEntry
+                {
+                    GameId = gameId,
+                    GameName = gameName,
+                    WindowTitle = windowTitle,
+                    ElapsedSeconds = elapsedSeconds,
+                    PendingRecalibration = false
+                });
+            }
+        }
+
+        public void RequestRecalibration(string gameId)
+        {
+            var entry = CalibrationEntries?.FirstOrDefault(e => e.GameId == gameId);
+            if (entry != null) entry.PendingRecalibration = true;
+        }
+
+        public void ClearCalibration(string gameId)
+        {
+            var entry = CalibrationEntries?.FirstOrDefault(e => e.GameId == gameId);
+            if (entry != null) CalibrationEntries.Remove(entry);
         }
 
         // ── NEW: Video properties ─────────────────────────────────────────────────
@@ -273,6 +391,8 @@ namespace CineSplash
             errors = new List<string>();
             if (SplashScreenDuration <= 0)
                 errors.Add("Splash Screen Duration must be greater than 0.");
+            if (MaxSplashDuration <= 0)
+                errors.Add("Max Splash Duration must be greater than 0.");
             if (LogoSize < 0)
                 errors.Add("Logo size must be greater than or equal to 0.");
             if (GameSpecificDurations != null)

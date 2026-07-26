@@ -29,6 +29,21 @@ namespace CineSplash
         private CineSplashSettings _settings;
         private DateTime _gameStartTimestamp;
 
+        private Game _currentGame;
+        private Window _currentSplashWindow;
+        private System.Windows.Threading.DispatcherTimer _windowPollTimer;
+        private System.Windows.Threading.DispatcherTimer _maxTimeoutTimer;
+        private System.Windows.Threading.DispatcherTimer _elapsedTimer;
+        private DateTime _splashOpenTimestamp;
+        private bool _isManualCalibrationMode;
+
+        private enum CalibrationMode
+        {
+            None,
+            Auto,
+            Manual
+        }
+
         // Static instance to allow Settings View to access settings if needed
         public static CineSplashPlugin Instance { get; private set; }
 
@@ -86,24 +101,73 @@ namespace CineSplash
         // ─── Event handlers ───────────────────────────────────────────────────────
         
 
-
         public override void OnGameStarting(OnGameStartingEventArgs args)
         {
             _gameStartTimestamp = DateTime.Now;
+            _splashOpenTimestamp = DateTime.Now;
+            _currentGame = args.Game;
+
             if (IsSplashBlockedByMode()) return;
 
-            if (_settings.UseGameStartedTimer)
-                ShowSplashScreen(args.Game, 0, false);
+            string gameId = args.Game.Id.ToString();
+
+            if (_settings.EnableWindowDetection)
+            {
+                if (_settings.IsPendingRecalibration(gameId))
+                {
+                    _isManualCalibrationMode = true;
+                    ShowSplashScreen(args.Game, 0, false, CalibrationMode.Manual);
+                    StartMaxTimeout(_currentSplashWindow);
+                }
+                else
+                {
+                    string savedTitle = _settings.GetWindowTitleForGame(gameId);
+                    if (savedTitle != null)
+                    {
+                        _isManualCalibrationMode = false;
+                        ShowSplashScreen(args.Game, 0, false, CalibrationMode.None);
+                        StartWindowTitlePolling(savedTitle, _currentSplashWindow);
+                        StartMaxTimeout(_currentSplashWindow);
+                    }
+                    else
+                    {
+                        _isManualCalibrationMode = false;
+                        ShowSplashScreen(args.Game, 0, false, CalibrationMode.Auto);
+                        StartMaxTimeout(_currentSplashWindow);
+                    }
+                }
+            }
             else
-                ShowSplashScreen(args.Game,
-                    _settings.GetDurationForGame(args.Game.Id.ToString(),
-                        args.Game.Platforms?.FirstOrDefault()?.Name ?? string.Empty),
-                    true);
+            {
+                _isManualCalibrationMode = false;
+                if (_settings.UseGameStartedTimer)
+                    ShowSplashScreen(args.Game, 0, false);
+                else
+                    ShowSplashScreen(args.Game,
+                        _settings.GetDurationForGame(args.Game.Id.ToString(),
+                            args.Game.Platforms?.FirstOrDefault()?.Name ?? string.Empty),
+                        true);
+            }
         }
 
         public override void OnGameStarted(OnGameStartedEventArgs args)
         {
-            if (_settings.UseGameStartedTimer && !IsSplashBlockedByMode())
+            if (IsSplashBlockedByMode()) return;
+
+            string gameId = args.Game.Id.ToString();
+
+            if (_settings.EnableWindowDetection)
+            {
+                if (_settings.IsPendingRecalibration(gameId))
+                {
+                    // Manual recalibration - wait for user input
+                }
+                else if (_settings.GetWindowTitleForGame(gameId) == null)
+                {
+                    StartForegroundHookWithAutoSave(_currentSplashWindow, args.Game);
+                }
+            }
+            else if (_settings.UseGameStartedTimer)
             {
                 TimeSpan elapsed = DateTime.Now - _gameStartTimestamp;
                 int remaining = _settings.GetDurationForGame(
@@ -143,12 +207,15 @@ namespace CineSplash
                 {
                     Interval = TimeSpan.FromSeconds(durationInSeconds)
                 };
-                timer.Tick += (s, e) => { timer.Stop(); FadeAndClose(win); };
+                timer.Tick += (s, e) => { timer.Stop(); StopAllDetection(); FadeAndClose(win); };
 
                 if (durationInSeconds > 0)
                     timer.Start();
                 else
+                {
+                    StopAllDetection();
                     FadeAndClose(win);
+                }
             });
         }
 
@@ -168,9 +235,64 @@ namespace CineSplash
             sb.Begin();
         }
 
+        // ─── Detection Helpers ────────────────────────────────────────────────────
+        
+        private void StartWindowTitlePolling(string targetTitle, Window splashWindow)
+        {
+            _windowPollTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+            _windowPollTimer.Tick += (s, e) =>
+            {
+                if (WindowDetector.FindWindowByTitle(targetTitle, out _))
+                {
+                    _windowPollTimer.Stop();
+                    StopAllDetection();
+                    FadeAndClose(splashWindow);
+                }
+            };
+            _windowPollTimer.Start();
+        }
+
+        private void StartForegroundHookWithAutoSave(Window splashWindow, Game game)
+        {
+            WindowDetector.StartForegroundHook(windowTitle =>
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    int elapsed = (int)(DateTime.Now - _splashOpenTimestamp).TotalSeconds;
+                    _settings.SaveCalibration(game.Id.ToString(), game.Name, windowTitle, elapsed);
+                    SavePluginSettings(_settings);
+                    Logger.Info($"CineSplash: Auto-calibrated '{game.Name}' -> \"{windowTitle}\", {elapsed}s");
+
+                    StopAllDetection();
+                    FadeAndClose(splashWindow);
+                });
+            });
+        }
+
+        private void StartMaxTimeout(Window splashWindow)
+        {
+            _maxTimeoutTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(_settings.MaxSplashDuration) };
+            _maxTimeoutTimer.Tick += (s, e) =>
+            {
+                _maxTimeoutTimer.Stop();
+                StopAllDetection();
+                FadeAndClose(splashWindow);
+                Logger.Warn("CineSplash: Max timeout reached, closing splash.");
+            };
+            _maxTimeoutTimer.Start();
+        }
+
+        private void StopAllDetection()
+        {
+            _windowPollTimer?.Stop();
+            _maxTimeoutTimer?.Stop();
+            _elapsedTimer?.Stop();
+            WindowDetector.StopForegroundHook();
+        }
+
         // ─── Core splash builder ──────────────────────────────────────────────────
 
-        private void ShowSplashScreen(Game game, int durationInSeconds, bool startTimerImmediately)
+        private void ShowSplashScreen(Game game, int durationInSeconds, bool startTimerImmediately, CalibrationMode calibrationMode = CalibrationMode.None)
         {
             if (_settings.ExcludedGameIds.Any(id => id.Trim() == game.Id.ToString()))
                 return;
@@ -256,13 +378,24 @@ namespace CineSplash
             {
                 Title          = "CineSplashScreen",
                 WindowStyle    = WindowStyle.None,
-                WindowState    = WindowState.Maximized,
                 Topmost        = true,
                 Background     = Brushes.Black,
                 ResizeMode     = ResizeMode.NoResize,
                 ShowInTaskbar  = false,
                 Opacity        = 0
             };
+
+            if (calibrationMode == CalibrationMode.Manual)
+            {
+                splashWindow.WindowState = WindowState.Normal;
+                splashWindow.Width = SystemParameters.PrimaryScreenWidth * 0.8;
+                splashWindow.Height = SystemParameters.PrimaryScreenHeight * 0.8;
+                splashWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            }
+            else
+            {
+                splashWindow.WindowState = WindowState.Maximized;
+            }
 
             var grid = new Grid();
 
@@ -336,7 +469,78 @@ namespace CineSplash
                 }
                 catch { }
             }
+            
+            // ── Elapsed time overlay (bottom-right) ───────────────────────
+            if (_settings.ShowElapsedTime)
+            {
+                var elapsedText = new TextBlock
+                {
+                    Text = "0.0s",
+                    Foreground = new SolidColorBrush(Color.FromArgb(180, 255, 255, 255)),
+                    FontSize = 14,
+                    FontFamily = new FontFamily("Consolas"),
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    Margin = new Thickness(0, 0, 20, 20)
+                };
+                grid.Children.Add(elapsedText);
 
+                _elapsedTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+                _elapsedTimer.Tick += (s, e) =>
+                {
+                    double elapsed = (DateTime.Now - _splashOpenTimestamp).TotalSeconds;
+                    elapsedText.Text = $"{elapsed:F1}s";
+                };
+                _elapsedTimer.Start();
+            }
+
+            // ── Manual recalibration prompt ───────────────────────────────
+            if (calibrationMode == CalibrationMode.Manual)
+            {
+                var promptBg = new Border
+                {
+                    Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)),
+                    CornerRadius = new CornerRadius(10),
+                    Padding = new Thickness(30, 20, 30, 20),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    Margin = new Thickness(0, 40, 0, 0)
+                };
+
+                var promptPanel = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center };
+                promptPanel.Children.Add(new TextBlock
+                {
+                    Text = "🎮 Calibration Mode",
+                    Foreground = new SolidColorBrush(Color.FromRgb(255, 200, 50)),
+                    FontSize = 24,
+                    FontWeight = FontWeights.Bold,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(0, 0, 0, 12)
+                });
+                promptPanel.Children.Add(new TextBlock
+                {
+                    Text = "When you see the game window appear behind this screen,\npress the hotkey below to save the timing.",
+                    Foreground = Brushes.White,
+                    FontSize = 16,
+                    TextAlignment = TextAlignment.Center,
+                    TextWrapping = TextWrapping.Wrap,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(0, 0, 0, 16)
+                });
+                promptPanel.Children.Add(new TextBlock
+                {
+                    Text = $"Press  [ {_settings.CalibrationHotkeyText} ]",
+                    Foreground = new SolidColorBrush(Color.FromRgb(100, 255, 100)),
+                    FontSize = 28,
+                    FontWeight = FontWeights.Bold,
+                    FontFamily = new FontFamily("Consolas"),
+                    HorizontalAlignment = HorizontalAlignment.Center
+                });
+                promptBg.Child = promptPanel;
+                grid.Children.Add(promptBg);
+            }
+
+            _currentSplashWindow = splashWindow;
             splashWindow.Content = grid;
 
             // ── Input polling (bypasses window focus and Playnite game limits) ────
@@ -379,11 +583,33 @@ namespace CineSplash
                 if (shouldClose)
                 {
                     inputTimer.Stop();
+                    StopAllDetection();
                     FadeAndClose(splashWindow);
+                    return;
+                }
+
+                // 3. Check Calibration Hotkey
+                if (_settings.EnableWindowDetection &&
+                    _settings.CalibrationHotkey != Key.None &&
+                    InputPoller.IsKeyPressed(_settings.CalibrationHotkey) &&
+                    InputPoller.AreModifiersPressed(_settings.CalibrationHotkeyModifiers))
+                {
+                    string title = WindowDetector.GetForegroundWindowTitle();
+                    if (!string.IsNullOrEmpty(title) && title != "CineSplashScreen" && title != "Playnite")
+                    {
+                        int elapsed = (int)(DateTime.Now - _splashOpenTimestamp).TotalSeconds;
+                        _settings.SaveCalibration(_currentGame.Id.ToString(), _currentGame.Name, title, elapsed);
+                        SavePluginSettings(_settings);
+                        Logger.Info($"CineSplash: Manual calibration '{_currentGame.Name}' -> \"{title}\", {elapsed}s");
+                    }
+                    inputTimer.Stop();
+                    StopAllDetection();
+                    FadeAndClose(splashWindow);
+                    return;
                 }
             };
             
-            splashWindow.Closed += (s, e) => inputTimer.Stop();
+            splashWindow.Closed += (s, e) => { inputTimer.Stop(); StopAllDetection(); };
             inputTimer.Start();
 
             // ── Fade-in animation ─────────────────────────────────────────────────
@@ -404,7 +630,7 @@ namespace CineSplash
                 {
                     Interval = TimeSpan.FromSeconds(duration)
                 };
-                closeTimer.Tick += (s, e) => { closeTimer.Stop(); FadeAndClose(splashWindow); };
+                closeTimer.Tick += (s, e) => { closeTimer.Stop(); StopAllDetection(); FadeAndClose(splashWindow); };
                 splashWindow.Loaded += (s, e) => { storyboard.Begin(); closeTimer.Start(); };
             }
             else

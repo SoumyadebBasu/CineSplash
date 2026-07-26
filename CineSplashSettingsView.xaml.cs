@@ -83,9 +83,87 @@ namespace CineSplash
             }
         }
 
+        // ── Calibration hotkey recording ──────────────────────────────
+        private bool _isRecordingCalibration = false;
+
+        private void RecordCalibrationHotkeyBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isRecordingCalibration) return;
+            var window = Window.GetWindow(this);
+            if (window == null) return;
+
+            _isRecordingCalibration = true;
+            RecordCalibrationHotkeyBtn.Content = "Listening...";
+            window.PreviewKeyDown += Window_CalibrationKeyDown;
+        }
+
+        private void Window_CalibrationKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (!_isRecordingCalibration) return;
+
+            var key = e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key;
+
+            // Ignore modifier keys by themselves
+            if (key == System.Windows.Input.Key.LeftCtrl || key == System.Windows.Input.Key.RightCtrl ||
+                key == System.Windows.Input.Key.LeftAlt || key == System.Windows.Input.Key.RightAlt ||
+                key == System.Windows.Input.Key.LeftShift || key == System.Windows.Input.Key.RightShift ||
+                key == System.Windows.Input.Key.LWin || key == System.Windows.Input.Key.RWin)
+                return;
+
+            e.Handled = true;
+
+            if (DataContext is CineSplashSettings settings)
+            {
+                if (key == System.Windows.Input.Key.Back || key == System.Windows.Input.Key.Delete)
+                {
+                    settings.CalibrationHotkey = System.Windows.Input.Key.None;
+                    settings.CalibrationHotkeyModifiers = System.Windows.Input.ModifierKeys.None;
+                }
+                else
+                {
+                    settings.CalibrationHotkey = key;
+                    settings.CalibrationHotkeyModifiers = System.Windows.Input.Keyboard.Modifiers;
+                }
+            }
+
+            _isRecordingCalibration = false;
+            RecordCalibrationHotkeyBtn.Content = "Record Hotkey";
+            var window = Window.GetWindow(this);
+            if (window != null)
+                window.PreviewKeyDown -= Window_CalibrationKeyDown;
+        }
+
+        // ── Table buttons ─────────────────────────────────────────────
+        private void Recalibrate_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string gameId &&
+                DataContext is CineSplashSettings settings)
+            {
+                settings.RequestRecalibration(gameId);
+            }
+        }
+
+        private void ClearCalibration_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string gameId &&
+                DataContext is CineSplashSettings settings)
+            {
+                settings.ClearCalibration(gameId);
+            }
+        }
+
         private void UserControl_Unloaded(object sender, RoutedEventArgs e)
         {
             StopRecording();
+            
+            if (_isRecordingCalibration)
+            {
+                _isRecordingCalibration = false;
+                RecordCalibrationHotkeyBtn.Content = "Record Hotkey";
+                var window = Window.GetWindow(this);
+                if (window != null)
+                    window.PreviewKeyDown -= Window_CalibrationKeyDown;
+            }
         }
     }
 

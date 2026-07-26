@@ -83,6 +83,82 @@
             <TextBlock Text="Triggers the splash screen when you return from a game."
                        FontStyle="Italic" Foreground="Gray" FontSize="11" Margin="20,0,0,15"/>
 
+            <!-- ── NEW: Window Detection ──────────────────────────────────────── -->
+            <TextBlock Text="Window Detection" FontWeight="Bold" FontSize="13" Margin="0,0,0,8"/>
+            <CheckBox Content="Enable smart window detection"
+                      IsChecked="{Binding EnableWindowDetection, UpdateSourceTrigger=PropertyChanged}"
+                      FontWeight="Bold" Margin="0,0,0,4"/>
+            <TextBlock Text="Automatically detects when the game window appears instead of relying on a fixed timer. Auto-calibrates on first launch."
+                       FontStyle="Italic" Foreground="Gray" FontSize="11" Margin="20,0,0,8" TextWrapping="Wrap"/>
+
+            <StackPanel Margin="20,0,0,15">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding EnableWindowDetection}" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                                <Setter Property="IsEnabled" Value="False"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+
+                <CheckBox Content="Show elapsed time on splash screen"
+                          IsChecked="{Binding ShowElapsedTime, UpdateSourceTrigger=PropertyChanged}"
+                          Margin="0,0,0,8"/>
+                
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="Max Splash Duration (safety net):" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding MaxSplashDuration, UpdateSourceTrigger=PropertyChanged}" Width="50" Margin="10,0,5,0"/>
+                    <TextBlock Text="seconds" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                    <TextBlock Text="Calibration Hotkey:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <Button x:Name="RecordCalibrationHotkeyBtn" Content="Record Hotkey" Width="100" Click="RecordCalibrationHotkeyBtn_Click"/>
+                    <TextBlock Text="Current:" VerticalAlignment="Center" Margin="15,0,5,0" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding CalibrationHotkeyText, Mode=OneWay}" VerticalAlignment="Center" Foreground="{DynamicResource TextBrush}"/>
+                </StackPanel>
+
+                <TextBlock Text="Calibrated Games" FontWeight="Bold" FontSize="13" Margin="0,10,0,8"/>
+                
+                <DataGrid ItemsSource="{Binding CalibrationEntries}"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False" CanUserDeleteRows="False"
+                          IsReadOnly="False" SelectionMode="Single"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal"
+                          Margin="0,0,0,5">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Game" Binding="{Binding GameName}" Width="*" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Window Title" Binding="{Binding WindowTitle}" Width="*"/>
+                        <DataGridTextColumn Header="Time" Binding="{Binding ElapsedSeconds}" Width="55" IsReadOnly="True"/>
+                        <DataGridTemplateColumn Header="" Width="85">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="Recalibrate" Click="Recalibrate_Click" Tag="{Binding GameId}" Padding="4,2" FontSize="11"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="" Width="55">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="Clear" Click="ClearCalibration_Click" Tag="{Binding GameId}" Padding="4,2" FontSize="11"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <TextBlock FontStyle="Italic" Foreground="Gray" FontSize="11" Margin="0,0,0,15" TextWrapping="Wrap">
+                    <Run FontWeight="Bold">Recalibrate:</Run>
+                    <Run> Opens manual calibration mode on next launch (80% window with prompt).</Run>
+                    <LineBreak/>
+                    <Run FontWeight="Bold">Clear:</Run>
+                    <Run> Removes all data. Next launch will auto-calibrate silently.</Run>
+                </TextBlock>
+            </StackPanel>
+
             <!-- Mode visibility -->
             <TextBlock Text="Mode Visibility" FontWeight="Bold" FontSize="13" Margin="0,0,0,8"/>
             <TextBlock Text="Choose which Playnite modes should suppress the splash screen entirely."
