@@ -99,7 +99,8 @@ namespace CineSplash
                 if (!string.IsNullOrWhiteSpace(title) && 
                     title != "CineSplashScreen" && 
                     title != "Playnite" &&
-                    !title.StartsWith("Analyzing", StringComparison.OrdinalIgnoreCase))
+                    !title.StartsWith("Analyzing", StringComparison.OrdinalIgnoreCase) &&
+                    !title.StartsWith("SplashScreenGuard", StringComparison.OrdinalIgnoreCase))
                 {
                     _onWindowDetected?.Invoke(title);
                 }
@@ -119,7 +120,8 @@ namespace CineSplash
                 if (string.IsNullOrWhiteSpace(title) || 
                     title == "CineSplashScreen" || 
                     title == "Playnite" ||
-                    title.StartsWith("Analyzing", StringComparison.OrdinalIgnoreCase))
+                    title.StartsWith("Analyzing", StringComparison.OrdinalIgnoreCase) ||
+                    title.StartsWith("SplashScreenGuard", StringComparison.OrdinalIgnoreCase))
                     return true;
 
                 if (title.IndexOf(titleSubstring, StringComparison.OrdinalIgnoreCase) >= 0)
@@ -162,7 +164,8 @@ namespace CineSplash
                 if (!string.IsNullOrWhiteSpace(title) &&
                     title != "CineSplashScreen" &&
                     title != "Playnite" &&
-                    !title.StartsWith("Analyzing", StringComparison.OrdinalIgnoreCase))
+                    !title.StartsWith("Analyzing", StringComparison.OrdinalIgnoreCase) &&
+                    !title.StartsWith("SplashScreenGuard", StringComparison.OrdinalIgnoreCase))
                 {
                     titles.Add(title);
                 }
