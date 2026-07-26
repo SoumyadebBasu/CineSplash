@@ -80,6 +80,7 @@ namespace CineSplash
 
         // ── NEW: Window Detection settings ────────────────────────────────────────
         private bool _enableWindowDetection = true;
+        private int _minimumSplashDuration = 3;
         private int _maxSplashDuration = 120;
         private Key _calibrationHotkey = Key.F12;
         private ModifierKeys _calibrationHotkeyModifiers = ModifierKeys.None;
@@ -169,7 +170,8 @@ namespace CineSplash
 
         [JsonProperty("EnableWindowDetection")]
         public bool EnableWindowDetection { get => _enableWindowDetection; set => SetValue(ref _enableWindowDetection, value); }
-
+        [JsonProperty("MinimumSplashDuration")]
+        public int MinimumSplashDuration { get => _minimumSplashDuration; set => SetValue(ref _minimumSplashDuration, value); }
         [JsonProperty("MaxSplashDuration")]
         public int MaxSplashDuration { get => _maxSplashDuration; set => SetValue(ref _maxSplashDuration, value); }
 

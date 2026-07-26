@@ -108,9 +108,11 @@ namespace CineSplash
         
         public override IEnumerable<GameMenuItem> GetGameMenuItems(GetGameMenuItemsArgs args)
         {
-            return new List<GameMenuItem>
+            var menuItems = new List<GameMenuItem>();
+
+            if (_settings.EnableWindowDetection)
             {
-                new GameMenuItem
+                menuItems.Add(new GameMenuItem
                 {
                     Description = "Recalibrate Window Detection",
                     MenuSection = "CineSplash",
@@ -123,24 +125,27 @@ namespace CineSplash
                         SavePluginSettings(_settings);
                         PlayniteApi.Dialogs.ShowMessage("The next time you launch the selected game(s), CineSplash will open in manual calibration mode.", "CineSplash Calibration");
                     }
-                },
-                new GameMenuItem
+                });
+            }
+
+            menuItems.Add(new GameMenuItem
+            {
+                Description = "Toggle Splash Screen (Enable/Disable)",
+                MenuSection = "CineSplash",
+                Action = a =>
                 {
-                    Description = "Toggle Splash Screen (Enable/Disable)",
-                    MenuSection = "CineSplash",
-                    Action = a =>
+                    bool anyDisabled = false;
+                    foreach (var game in args.Games)
                     {
-                        bool anyDisabled = false;
-                        foreach (var game in args.Games)
-                        {
-                            anyDisabled = _settings.ToggleDisableSplash(game.Id.ToString(), game.Name);
-                        }
-                        SavePluginSettings(_settings);
-                        string status = anyDisabled ? "DISABLED" : "ENABLED";
-                        PlayniteApi.Dialogs.ShowMessage($"Splash screen is now {status} for the selected game(s).", "CineSplash Settings");
+                        anyDisabled = _settings.ToggleDisableSplash(game.Id.ToString(), game.Name);
                     }
+                    SavePluginSettings(_settings);
+                    string status = anyDisabled ? "DISABLED" : "ENABLED";
+                    PlayniteApi.Dialogs.ShowMessage($"Splash screen is now {status} for the selected game(s).", "CineSplash Settings");
                 }
-            };
+            });
+
+            return menuItems;
         }
 
         public override void OnGameStarting(OnGameStartingEventArgs args)
@@ -294,7 +299,7 @@ namespace CineSplash
                 {
                     _windowPollTimer.Stop();
                     StopAllDetection();
-                    FadeAndClose(splashWindow);
+                    TryCloseSplashAfterMinimum(splashWindow);
                 }
             };
             _windowPollTimer.Start();
@@ -312,7 +317,7 @@ namespace CineSplash
                     Logger.Info($"CineSplash: Auto-calibrated '{game.Name}' -> \"{windowTitle}\", {elapsed}s");
 
                     StopAllDetection();
-                    FadeAndClose(splashWindow);
+                    TryCloseSplashAfterMinimum(splashWindow);
                 });
             }, _preExistingPids);
         }
@@ -336,6 +341,29 @@ namespace CineSplash
             _maxTimeoutTimer?.Stop();
             _elapsedTimer?.Stop();
             WindowDetector.StopForegroundHook();
+        }
+
+        private void TryCloseSplashAfterMinimum(Window splashWindow)
+        {
+            TimeSpan elapsed = DateTime.Now - _splashOpenTimestamp;
+            double minimum = _settings.MinimumSplashDuration;
+            if (elapsed.TotalSeconds >= minimum)
+            {
+                FadeAndClose(splashWindow);
+            }
+            else
+            {
+                var delayTimer = new System.Windows.Threading.DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(minimum - elapsed.TotalSeconds)
+                };
+                delayTimer.Tick += (s, e) =>
+                {
+                    delayTimer.Stop();
+                    FadeAndClose(splashWindow);
+                };
+                delayTimer.Start();
+            }
         }
 
         // ─── Core splash builder ──────────────────────────────────────────────────
