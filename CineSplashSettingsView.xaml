@@ -74,12 +74,12 @@
                           IsChecked="{Binding ShowElapsedTime, UpdateSourceTrigger=PropertyChanged}"
                           Margin="0,0,0,8"/>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                    <TextBlock Text="Calibration Hotkey:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="Manual Selection Hotkey:" VerticalAlignment="Center" Margin="0,0,10,0"/>
                     <Button x:Name="RecordCalibrationHotkeyBtn" Content="Record Hotkey" Width="100" Click="RecordCalibrationHotkeyBtn_Click"/>
                     <TextBlock Text="Current:" VerticalAlignment="Center" Margin="15,0,5,0" FontWeight="Bold"/>
                     <TextBlock Text="{Binding CalibrationHotkeyText, Mode=OneWay}" VerticalAlignment="Center" Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
-                <TextBlock Text="Calibrated Games" FontWeight="Bold" FontSize="13" Margin="0,10,0,8"/>
+                <TextBlock Text="Detected Games" FontWeight="Bold" FontSize="13" Margin="0,10,0,8"/>
                 
                 <DataGrid ItemsSource="{Binding CalibrationEntries}"
                           AutoGenerateColumns="False"
@@ -95,7 +95,7 @@
                         <DataGridTemplateColumn Header="" Width="85">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button Content="Recalibrate" Click="Recalibrate_Click" Tag="{Binding GameId}" Padding="4,2" FontSize="11"/>
+                                    <Button Content="Re-detect" Click="Recalibrate_Click" Tag="{Binding GameId}" Padding="4,2" FontSize="11"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
@@ -110,11 +110,11 @@
                 </DataGrid>
 
                 <TextBlock FontStyle="Italic" Foreground="Gray" FontSize="11" Margin="0,0,0,15" TextWrapping="Wrap">
-                    <Run FontWeight="Bold">Recalibrate:</Run>
-                    <Run> Opens manual calibration mode on next launch (80% window with prompt).</Run>
+                    <Run FontWeight="Bold">Re-detect:</Run>
+                    <Run> Triggers Manual Window Selection on next launch (80% overlay with window picker).</Run>
                     <LineBreak/>
                     <Run FontWeight="Bold">Clear:</Run>
-                    <Run> Removes all data. Next launch will auto-calibrate silently.</Run>
+                    <Run> Removes detection data. Next launch will auto-detect the game window silently.</Run>
                 </TextBlock>
             </StackPanel>
 

@@ -114,7 +114,7 @@ namespace CineSplash
             {
                 menuItems.Add(new GameMenuItem
                 {
-                    Description = "Recalibrate Window Detection",
+                    Description = "Re-detect Game Window",
                     MenuSection = "CineSplash",
                     Action = a =>
                     {
@@ -123,7 +123,7 @@ namespace CineSplash
                             _settings.RequestRecalibration(game.Id.ToString(), game.Name);
                         }
                         SavePluginSettings(_settings);
-                        PlayniteApi.Dialogs.ShowMessage("The next time you launch the selected game(s), CineSplash will open in manual calibration mode.", "CineSplash Calibration");
+                        PlayniteApi.Dialogs.ShowMessage("The next time you launch the selected game(s), CineSplash will enter Manual Window Selection mode.", "CineSplash Window Detection");
                     }
                 });
             }
@@ -213,7 +213,7 @@ namespace CineSplash
             {
                 if (_settings.IsPendingRecalibration(gameId))
                 {
-                    // Manual recalibration - wait for user input
+                    // Manual window selection - wait for user input
                 }
                 else if (_settings.GetWindowTitleForGame(gameId) == null)
                 {
@@ -314,7 +314,7 @@ namespace CineSplash
                     int elapsed = (int)(DateTime.Now - _splashOpenTimestamp).TotalSeconds;
                     _settings.SaveCalibration(game.Id.ToString(), game.Name, windowTitle, elapsed);
                     SavePluginSettings(_settings);
-                    Logger.Info($"CineSplash: Auto-calibrated '{game.Name}' -> \"{windowTitle}\", {elapsed}s");
+                    Logger.Info($"CineSplash: Auto-detected window '{game.Name}' -> \"{windowTitle}\", {elapsed}s");
 
                     StopAllDetection();
                     TryCloseSplashAfterMinimum(splashWindow);
@@ -586,7 +586,7 @@ namespace CineSplash
                 var promptPanel = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center };
                 promptPanel.Children.Add(new TextBlock
                 {
-                    Text = "\U0001F3AE Calibration Mode",
+                    Text = "\U0001F3AE Window Detection Mode",
                     Foreground = new SolidColorBrush(Color.FromRgb(255, 200, 50)),
                     FontSize = 24,
                     FontWeight = FontWeights.Bold,
@@ -636,7 +636,7 @@ namespace CineSplash
                 // ── Save button ──
                 var saveBtn = new Button
                 {
-                    Content = "\U0001F4BE  Save Calibration",
+                    Content = "\U0001F4BE  Save Detection",
                     FontSize = 16,
                     FontWeight = FontWeights.Bold,
                     Padding = new Thickness(20, 8, 20, 8),
@@ -654,7 +654,7 @@ namespace CineSplash
                             selectedTitle,
                             elapsed);
                         SavePluginSettings(_settings);
-                        Logger.Info($"CineSplash: Manual calibration '{_currentGame.Name}' -> \"{selectedTitle}\", {elapsed}s");
+                        Logger.Info($"CineSplash: Window manually detected '{_currentGame.Name}' -> \"{selectedTitle}\", {elapsed}s");
                         StopAllDetection();
                         FadeAndClose(splashWindow);
                     }
@@ -664,7 +664,7 @@ namespace CineSplash
                 // ── Hotkey fallback hint ──
                 promptPanel.Children.Add(new TextBlock
                 {
-                    Text = $"Or press  [ {_settings.CalibrationHotkeyText} ]  to capture the current foreground window.",
+                    Text = $"Or press  [ {_settings.CalibrationHotkeyText} ]  to auto-capture the current foreground window.",
                     Foreground = new SolidColorBrush(Color.FromArgb(160, 200, 200, 200)),
                     FontSize = 12,
                     FontFamily = new FontFamily("Consolas"),
@@ -724,7 +724,7 @@ namespace CineSplash
                     return;
                 }
 
-                // 3. Check Calibration Hotkey
+                // 3. Check Manual Selection Hotkey
                 if (_settings.EnableWindowDetection &&
                     _settings.CalibrationHotkey != Key.None &&
                     InputPoller.IsKeyPressed(_settings.CalibrationHotkey) &&
@@ -736,7 +736,7 @@ namespace CineSplash
                         int elapsed = (int)(DateTime.Now - _splashOpenTimestamp).TotalSeconds;
                         _settings.SaveCalibration(_currentGame.Id.ToString(), _currentGame.Name, title, elapsed);
                         SavePluginSettings(_settings);
-                        Logger.Info($"CineSplash: Manual calibration '{_currentGame.Name}' -> \"{title}\", {elapsed}s");
+                        Logger.Info($"CineSplash: Window manually detected '{_currentGame.Name}' -> \"{title}\", {elapsed}s");
                     }
                     inputTimer.Stop();
                     StopAllDetection();

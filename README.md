@@ -78,14 +78,14 @@ If no video is found for a game, CineSplash falls back to the static background 
 
 ---
 
-## Modes & Calibration
+## Modes & Game Window Detection
 
 CineSplash supports two primary modes for closing the splash screen when launching a game:
 
 ### 1. Smart Window Detection Mode (Recommended)
 Actively monitors background processes to detect when your game's window actually appears, closing the splash screen at the exact right moment.
 - **Auto-Calibration:** On first launch, CineSplash automatically snapshots processes and records the game window title.
-- **Manual Recalibration:** If auto-calibration captures the wrong window, right-click the game in your library and select **Extensions > CineSplash > Recalibrate Window Detection**. On next launch, an overlay prompt with a dropdown window picker allows explicit window selection.
+- **Manual Window Selection:** If auto-calibration captures the wrong window, right-click the game in your library and select **Extensions > CineSplash > Re-detect Game Window**. On next launch, an overlay prompt with a dropdown window picker allows explicit window selection.
 - **Minimum Splash Duration:** Guarantees the splash stays visible for a minimum number of seconds (default: 3s) so fast-loading games don't flash on/off too quickly.
 - **Max Splash Duration:** Safety net timeout (default: 120s) to close the splash screen if a game window is never detected.
 
