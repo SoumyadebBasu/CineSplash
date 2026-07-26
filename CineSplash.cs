@@ -99,6 +99,11 @@ namespace CineSplash
             return false;
         }
 
+        private bool IsSplashDisabledForGame(string gameId)
+        {
+            return _settings.CalibrationEntries?.Any(e => e.GameId == gameId && e.DisableSplash) == true;
+        }
+
         // ─── Event handlers ───────────────────────────────────────────────────────
         
         public override IEnumerable<GameMenuItem> GetGameMenuItems(GetGameMenuItemsArgs args)
@@ -118,6 +123,22 @@ namespace CineSplash
                         SavePluginSettings(_settings);
                         PlayniteApi.Dialogs.ShowMessage("The next time you launch the selected game(s), CineSplash will open in manual calibration mode.", "CineSplash Calibration");
                     }
+                },
+                new GameMenuItem
+                {
+                    Description = "Toggle Splash Screen (Enable/Disable)",
+                    MenuSection = "CineSplash",
+                    Action = a =>
+                    {
+                        bool anyDisabled = false;
+                        foreach (var game in args.Games)
+                        {
+                            anyDisabled = _settings.ToggleDisableSplash(game.Id.ToString(), game.Name);
+                        }
+                        SavePluginSettings(_settings);
+                        string status = anyDisabled ? "DISABLED" : "ENABLED";
+                        PlayniteApi.Dialogs.ShowMessage($"Splash screen is now {status} for the selected game(s).", "CineSplash Settings");
+                    }
                 }
             };
         }
@@ -134,7 +155,7 @@ namespace CineSplash
                 try { _preExistingPids.Add((uint)proc.Id); } catch { }
             }
 
-            if (IsSplashBlockedByMode()) return;
+            if (IsSplashBlockedByMode() || IsSplashDisabledForGame(args.Game.Id.ToString())) return;
 
             string gameId = args.Game.Id.ToString();
 
@@ -179,7 +200,7 @@ namespace CineSplash
 
         public override void OnGameStarted(OnGameStartedEventArgs args)
         {
-            if (IsSplashBlockedByMode()) return;
+            if (IsSplashBlockedByMode() || IsSplashDisabledForGame(args.Game.Id.ToString())) return;
 
             string gameId = args.Game.Id.ToString();
 
@@ -208,7 +229,7 @@ namespace CineSplash
 
         public override void OnGameStopped(OnGameStoppedEventArgs args)
         {
-            if (_settings.ShowSplashOnGameClose && !IsSplashBlockedByMode())
+            if (_settings.ShowSplashOnGameClose && !IsSplashBlockedByMode() && !IsSplashDisabledForGame(args.Game.Id.ToString()))
             {
                 ShowSplashScreen(args.Game,
                     _settings.GetDurationForGame(

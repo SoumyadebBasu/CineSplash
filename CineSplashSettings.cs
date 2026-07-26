@@ -56,6 +56,10 @@ namespace CineSplash
 
         [JsonProperty("PendingRecalibration")]
         public bool PendingRecalibration { get => _pendingRecalibration; set => SetValue(ref _pendingRecalibration, value); }
+
+        private bool _disableSplash;
+        [JsonProperty("DisableSplash")]
+        public bool DisableSplash { get => _disableSplash; set => SetValue(ref _disableSplash, value); }
     }
 
     public class CineSplashSettings : ObservableObject, ISettings
@@ -254,8 +258,37 @@ namespace CineSplash
                     GameName = gameName,
                     WindowTitle = null,
                     ElapsedSeconds = 0,
-                    PendingRecalibration = true
+                    PendingRecalibration = true,
+                    DisableSplash = false
                 });
+            }
+        }
+
+        public bool ToggleDisableSplash(string gameId, string gameName = "Unknown Game")
+        {
+            if (CalibrationEntries == null)
+            {
+                CalibrationEntries = new System.Collections.ObjectModel.ObservableCollection<CalibrationEntry>();
+            }
+
+            var entry = CalibrationEntries.FirstOrDefault(e => e.GameId == gameId);
+            if (entry != null)
+            {
+                entry.DisableSplash = !entry.DisableSplash;
+                return entry.DisableSplash;
+            }
+            else
+            {
+                CalibrationEntries.Add(new CalibrationEntry
+                {
+                    GameId = gameId,
+                    GameName = gameName,
+                    WindowTitle = null,
+                    ElapsedSeconds = 0,
+                    PendingRecalibration = false,
+                    DisableSplash = true
+                });
+                return true;
             }
         }
 
