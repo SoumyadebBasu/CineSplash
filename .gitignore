@@ -364,3 +364,4 @@ FodyWeavers.xsd
 
 # CineSplash - packed plugin output
 packed/
+*.pext
