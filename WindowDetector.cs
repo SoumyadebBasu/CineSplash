@@ -79,7 +79,10 @@ namespace CineSplash
             if (eventType == EVENT_SYSTEM_FOREGROUND && hwnd != IntPtr.Zero)
             {
                 string title = GetWindowTitle(hwnd);
-                if (!string.IsNullOrWhiteSpace(title) && title != "CineSplashScreen" && title != "Playnite")
+                if (!string.IsNullOrWhiteSpace(title) && 
+                    title != "CineSplashScreen" && 
+                    title != "Playnite" &&
+                    !title.StartsWith("Analyzing", StringComparison.OrdinalIgnoreCase))
                 {
                     _onWindowDetected?.Invoke(title);
                 }
@@ -96,7 +99,10 @@ namespace CineSplash
                     return true; // continue enumeration
 
                 string title = GetWindowTitle(hWnd);
-                if (string.IsNullOrWhiteSpace(title) || title == "CineSplashScreen" || title == "Playnite")
+                if (string.IsNullOrWhiteSpace(title) || 
+                    title == "CineSplashScreen" || 
+                    title == "Playnite" ||
+                    title.StartsWith("Analyzing", StringComparison.OrdinalIgnoreCase))
                     return true;
 
                 if (title.IndexOf(titleSubstring, StringComparison.OrdinalIgnoreCase) >= 0)
