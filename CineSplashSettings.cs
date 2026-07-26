@@ -188,6 +188,12 @@ namespace CineSplash
         public ObservableCollection<CalibrationEntry> CalibrationEntries { get => _calibrationEntries; set => SetValue(ref _calibrationEntries, value); }
 
         [JsonIgnore]
+        public System.Collections.IEnumerable DisabledGamesView
+        {
+            get { return CalibrationEntries?.Where(e => e.DisableSplash); }
+        }
+
+        [JsonIgnore]
         public string CalibrationHotkeyText
         {
             get

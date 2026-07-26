@@ -5,6 +5,7 @@
 
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows;
@@ -149,6 +150,20 @@ namespace CineSplash
                 DataContext is CineSplashSettings settings)
             {
                 settings.ClearCalibration(gameId);
+            }
+        }
+
+        private void EnableGame_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string gameId &&
+                DataContext is CineSplashSettings settings)
+            {
+                var entry = settings.CalibrationEntries?.FirstOrDefault(x => x.GameId == gameId);
+                if (entry != null)
+                {
+                    entry.DisableSplash = false;
+                    settings.OnPropertyChanged(nameof(settings.DisabledGamesView));
+                }
             }
         }
 
