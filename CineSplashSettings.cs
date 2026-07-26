@@ -234,10 +234,29 @@ namespace CineSplash
             }
         }
 
-        public void RequestRecalibration(string gameId)
+        public void RequestRecalibration(string gameId, string gameName = "Unknown Game")
         {
-            var entry = CalibrationEntries?.FirstOrDefault(e => e.GameId == gameId);
-            if (entry != null) entry.PendingRecalibration = true;
+            if (CalibrationEntries == null)
+            {
+                CalibrationEntries = new System.Collections.ObjectModel.ObservableCollection<CalibrationEntry>();
+            }
+
+            var entry = CalibrationEntries.FirstOrDefault(e => e.GameId == gameId);
+            if (entry != null)
+            {
+                entry.PendingRecalibration = true;
+            }
+            else
+            {
+                CalibrationEntries.Add(new CalibrationEntry
+                {
+                    GameId = gameId,
+                    GameName = gameName,
+                    WindowTitle = null,
+                    ElapsedSeconds = 0,
+                    PendingRecalibration = true
+                });
+            }
         }
 
         public void ClearCalibration(string gameId)

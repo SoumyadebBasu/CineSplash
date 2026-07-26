@@ -101,6 +101,26 @@ namespace CineSplash
 
         // ─── Event handlers ───────────────────────────────────────────────────────
         
+        public override IEnumerable<GameMenuItem> GetGameMenuItems(GetGameMenuItemsArgs args)
+        {
+            return new List<GameMenuItem>
+            {
+                new GameMenuItem
+                {
+                    Description = "Recalibrate Window Detection",
+                    MenuSection = "CineSplash",
+                    Action = a =>
+                    {
+                        foreach (var game in args.Games)
+                        {
+                            _settings.RequestRecalibration(game.Id.ToString(), game.Name);
+                        }
+                        SavePluginSettings(_settings);
+                        PlayniteApi.Dialogs.ShowMessage("The next time you launch the selected game(s), CineSplash will open in manual calibration mode.", "CineSplash Calibration");
+                    }
+                }
+            };
+        }
 
         public override void OnGameStarting(OnGameStartingEventArgs args)
         {
