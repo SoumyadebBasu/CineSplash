@@ -26,14 +26,15 @@ This is a fork of [VibeSplash by EvoShot](https://github.com/EvoShot/Playnite-Sp
 - 🏷️ Logo overlay from Extra Metadata Loader displayed on top
 - 🎯 Choose your preferred video source — trailer, microtrailer, or either with fallback
 - 🔇 Optional audio mute during video playback
+- ⚙️ **Two-Mode Architecture** — Choose between **Smart Window Detection** (recommended) or **Fixed Timers** for closing the splash screen
 - 🧠 **Smart Window Detection** — automatically detects when the game window appears and closes the splash screen seamlessly
-- 🎮 **Calibration System** — automatically calibrates timings on first launch, with manual recalibration overrides via a dropdown window picker
+- ⏳ **Minimum & Safety Net Durations** — set a minimum display duration so fast-loading games don't flash off instantly, and a max timeout safety net
+- 🎮 **Calibration System** — automatically calibrates window titles on first launch, with manual recalibration overrides via a dropdown window picker
 - 🖱️ **Context Menu Integration** — right-click any game to force a manual recalibration or quickly toggle the splash screen on/off just for that game
-- ⏱️ Configurable splash duration — globally, per-platform, or per-game
-- ⏳ Option to wait until the game has actually started before the timer begins
+- ⏱️ **Fixed Timer Mode** — traditional timer-based splash screen closing with support for platform-specific and game-specific overrides
+- 🚫 **Disabled Games DataGrid** — easily view and re-enable games that have splash screens disabled
 - 🔄 Optional splash screen when returning to Playnite after closing a game
-- 🚫 Disable splash in Desktop mode, Fullscreen mode, or both
-- 📋 Exclude specific games from the splash
+- 🚫 Suppress splash in Desktop mode, Fullscreen mode, or both
 - 💻 Supports both **portable** and **installed** Playnite setups
 
 ---
@@ -75,33 +76,47 @@ If no video is found for a game, CineSplash falls back to the static background 
 
 ---
 
-## Smart Window Detection & Calibration
+---
 
-CineSplash includes an intelligent window detector that actively watches for your game's window to appear, ensuring the splash screen closes at the exact right moment.
+## Modes & Calibration
 
-1. **Auto-Calibration:** The first time you launch a game, CineSplash will run normally in the background. Once the game window is detected, the plugin will automatically record the window title and timing.
-2. **Manual Recalibration:** If auto-calibration captures the wrong window, you can right-click the game in your library, navigate to **Extensions > CineSplash > Recalibrate Window Detection**. The next time you launch the game, the splash screen will open with a dropdown menu where you can explicitly pick the correct window.
-3. **Toggle Splash Screen:** Don't want the splash screen for a specific game? Just right-click the game and select **Extensions > CineSplash > Toggle Splash Screen (Enable/Disable)**.
+CineSplash supports two primary modes for closing the splash screen when launching a game:
+
+### 1. Smart Window Detection Mode (Recommended)
+Actively monitors background processes to detect when your game's window actually appears, closing the splash screen at the exact right moment.
+- **Auto-Calibration:** On first launch, CineSplash automatically snapshots processes and records the game window title.
+- **Manual Recalibration:** If auto-calibration captures the wrong window, right-click the game in your library and select **Extensions > CineSplash > Recalibrate Window Detection**. On next launch, an overlay prompt with a dropdown window picker allows explicit window selection.
+- **Minimum Splash Duration:** Guarantees the splash stays visible for a minimum number of seconds (default: 3s) so fast-loading games don't flash on/off too quickly.
+- **Max Splash Duration:** Safety net timeout (default: 120s) to close the splash screen if a game window is never detected.
+
+### 2. Fixed Timer Mode
+Traditional timer-based approach. Closes after a configured duration (global default, platform-specific, or game-specific).
+
+### Right-Click Context Menu & Managing Disabled Games
+- **Toggle Splash Screen:** Right-click any game in Playnite and select **Extensions > CineSplash > Toggle Splash Screen (Enable/Disable)** to bypass the splash for that game.
+- **Disabled Games DataGrid:** Open **CineSplash Settings** to view a table of all disabled games and click **Enable** to turn the splash screen back on.
 
 ---
 
 ## Settings Overview
 
-| Setting | Description |
-|---|---|
-| Default Duration | How long the splash stays on screen (seconds) |
-| Logo Size | Width of the logo overlay in pixels |
-| Skip Splash (Keyboard) | Custom keyboard key/combo to interrupt video playback |
-| Skip Splash (Controller) | Controller button or 2-button combo (e.g. Start + Back) to interrupt video playback |
-| Wait for game to start | Starts the timer only after the game process is detected |
-| Show splash on game close | Shows the splash when you return to Playnite after closing a game |
-| Disable in Fullscreen/Desktop | Suppress the splash in a specific Playnite mode |
-| Enable Video Splash | Use a video file as the splash background |
-| Video Source | Which video file to prefer (trailer vs. microtrailer) |
-| Mute Video Audio | Silence the video during the splash |
-| Platform-specific durations | Set different durations per platform |
-| Game-specific durations | Override duration for individual games by database ID |
-| Excluded Game IDs | Skip the splash entirely for specific games |
+| Setting | Mode / Section | Description |
+|---|---|---|
+| Splash Screen Close Mode | Master Toggle | Switch between Smart Window Detection and Fixed Timer mode |
+| Minimum Splash Duration | Window Detection | Minimum seconds to show splash even if game loads instantly |
+| Max Splash Duration | Window Detection | Safety net timeout if window detection fails |
+| Show Elapsed Time | Window Detection | Live launch timer overlay on splash screen |
+| Default Duration | Fixed Timers | Default splash duration in seconds |
+| Wait for game to start | Fixed Timers | Starts the timer only after the game process is detected |
+| Platform-specific timers | Fixed Timers | Set different durations per platform |
+| Game-specific durations | Fixed Timers | Override duration for individual games by database ID |
+| Logo Size | Global | Width of logo overlay in pixels |
+| Skip Splash (Keyboard) | Global | Custom keyboard key/combo to interrupt video playback |
+| Skip Splash (Controller) | Global | Controller button or 2-button combo (e.g. Start + Back) to interrupt video playback |
+| Show splash on game close | Global | Shows splash when returning to Playnite after closing a game |
+| Disable in Fullscreen/Desktop | Global | Suppress splash in specific Playnite modes |
+| Enable Video Splash | Global | Use video trailer/microtrailer as splash background |
+| Disabled Games DataGrid | Global | Table of games with splash disabled, with one-click Enable button |
 
 ---
 
