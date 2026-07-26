@@ -1,7 +1,7 @@
 Id: CineSplash
 Name: CineSplash
 Author: Raoul (fork of EvoShot/VibeSplash, Artzox/Playnite-Splash-Addon)
-Version: 1.2.2
+Version: 1.2.3
 Module: CineSplash.dll
 Type: GenericPlugin
 EntryPoint: CineSplash.CineSplashPlugin

@@ -36,6 +36,7 @@ namespace CineSplash
         private System.Windows.Threading.DispatcherTimer _elapsedTimer;
         private DateTime _splashOpenTimestamp;
         private bool _isManualCalibrationMode;
+        private HashSet<uint> _preExistingPids;
 
         private enum CalibrationMode
         {
@@ -106,6 +107,12 @@ namespace CineSplash
             _gameStartTimestamp = DateTime.Now;
             _splashOpenTimestamp = DateTime.Now;
             _currentGame = args.Game;
+
+            _preExistingPids = new HashSet<uint>();
+            foreach (var proc in System.Diagnostics.Process.GetProcesses())
+            {
+                try { _preExistingPids.Add((uint)proc.Id); } catch { }
+            }
 
             if (IsSplashBlockedByMode()) return;
 
@@ -254,15 +261,6 @@ namespace CineSplash
 
         private void StartForegroundHookWithAutoSave(Window splashWindow, Game game)
         {
-            // Snapshot all currently running process IDs.
-            // The foreground hook will only accept windows from NEW processes
-            // (i.e., the game process that spawns after this point).
-            var preExistingPids = new HashSet<uint>();
-            foreach (var proc in System.Diagnostics.Process.GetProcesses())
-            {
-                try { preExistingPids.Add((uint)proc.Id); } catch { }
-            }
-
             WindowDetector.StartForegroundHook(windowTitle =>
             {
                 Application.Current.Dispatcher.Invoke(() =>
@@ -275,7 +273,7 @@ namespace CineSplash
                     StopAllDetection();
                     FadeAndClose(splashWindow);
                 });
-            }, preExistingPids);
+            }, _preExistingPids);
         }
 
         private void StartMaxTimeout(Window splashWindow)
