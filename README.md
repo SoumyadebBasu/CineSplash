@@ -26,6 +26,9 @@ This is a fork of [VibeSplash by EvoShot](https://github.com/EvoShot/Playnite-Sp
 - 🏷️ Logo overlay from Extra Metadata Loader displayed on top
 - 🎯 Choose your preferred video source — trailer, microtrailer, or either with fallback
 - 🔇 Optional audio mute during video playback
+- 🧠 **Smart Window Detection** — automatically detects when the game window appears and closes the splash screen seamlessly
+- 🎮 **Calibration System** — automatically calibrates timings on first launch, with manual recalibration overrides via a dropdown window picker
+- 🖱️ **Context Menu Integration** — right-click any game to force a manual recalibration or quickly toggle the splash screen on/off just for that game
 - ⏱️ Configurable splash duration — globally, per-platform, or per-game
 - ⏳ Option to wait until the game has actually started before the timer begins
 - 🔄 Optional splash screen when returning to Playnite after closing a game
@@ -69,6 +72,16 @@ This is a fork of [VibeSplash by EvoShot](https://github.com/EvoShot/Playnite-Sp
    - **Microtrailer only**
 
 If no video is found for a game, CineSplash falls back to the static background image automatically.
+
+---
+
+## Smart Window Detection & Calibration
+
+CineSplash includes an intelligent window detector that actively watches for your game's window to appear, ensuring the splash screen closes at the exact right moment.
+
+1. **Auto-Calibration:** The first time you launch a game, CineSplash will run normally in the background. Once the game window is detected, the plugin will automatically record the window title and timing.
+2. **Manual Recalibration:** If auto-calibration captures the wrong window, you can right-click the game in your library, navigate to **Extensions > CineSplash > Recalibrate Window Detection**. The next time you launch the game, the splash screen will open with a dropdown menu where you can explicitly pick the correct window.
+3. **Toggle Splash Screen:** Don't want the splash screen for a specific game? Just right-click the game and select **Extensions > CineSplash > Toggle Splash Screen (Enable/Disable)**.
 
 ---
 
