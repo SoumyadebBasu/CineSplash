@@ -87,17 +87,33 @@
                           IsReadOnly="False" SelectionMode="Single"
                           HeadersVisibility="Column"
                           GridLinesVisibility="Horizontal"
+                          Background="#212121" Foreground="White"
+                          RowBackground="#212121" AlternatingRowBackground="#272727"
                           Margin="0,0,0,5">
                     <DataGrid.RowStyle>
                         <Style TargetType="DataGridRow">
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="Background" Value="#212121"/>
                             <Style.Triggers>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="#3A3A3A"/>
+                                    <Setter Property="Background" Value="#0379FF"/>
                                     <Setter Property="Foreground" Value="White"/>
                                 </Trigger>
                             </Style.Triggers>
                         </Style>
                     </DataGrid.RowStyle>
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Foreground" Value="White"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#0379FF"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                    <Setter Property="BorderBrush" Value="#0379FF"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.CellStyle>
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Game" Binding="{Binding GameName}" Width="*" IsReadOnly="True"/>
                         <DataGridTextColumn Header="Window Title" Binding="{Binding WindowTitle}" Width="*"/>
@@ -348,17 +364,33 @@
                       IsReadOnly="True" SelectionMode="Single"
                       HeadersVisibility="Column"
                       GridLinesVisibility="Horizontal"
+                      Background="#212121" Foreground="White"
+                      RowBackground="#212121" AlternatingRowBackground="#272727"
                       Margin="0,0,0,5" MaxHeight="200">
                 <DataGrid.RowStyle>
                     <Style TargetType="DataGridRow">
+                        <Setter Property="Foreground" Value="White"/>
+                        <Setter Property="Background" Value="#212121"/>
                         <Style.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#3A3A3A"/>
+                                <Setter Property="Background" Value="#0379FF"/>
                                 <Setter Property="Foreground" Value="White"/>
                             </Trigger>
                         </Style.Triggers>
                     </Style>
                 </DataGrid.RowStyle>
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Foreground" Value="White"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#0379FF"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="BorderBrush" Value="#0379FF"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.CellStyle>
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Game" Binding="{Binding GameName}" Width="*"/>
                     <DataGridTemplateColumn Header="" Width="70">
