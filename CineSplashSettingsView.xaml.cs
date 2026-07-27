@@ -140,7 +140,14 @@ namespace CineSplash
             if (sender is Button btn && btn.Tag is string gameId &&
                 DataContext is CineSplashSettings settings)
             {
+                var entry = settings.CalibrationEntries?.FirstOrDefault(x => x.GameId == gameId);
+                string gameName = entry?.GameName ?? "the selected game";
                 settings.RequestRecalibration(gameId);
+                MessageBox.Show(
+                    $"Re-detection has been scheduled for \"{gameName}\".\n\nThe next time you launch this game, CineSplash will open the Manual Window Selection overlay so you can pick the correct game window.",
+                    "Re-detect Game Window",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
             }
         }
 
